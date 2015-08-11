@@ -1,0 +1,10 @@
+'use strict';
+import './polyfill';
+import machRadium from './machRadium';
+import * as machReact from './machReact';
+export Component from './Component';
+let React = machReact;
+export default React;
+export mixin from './mixin';
+if (!global.React) global.React = machReact;
+global.machReact = machReact;
