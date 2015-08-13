@@ -42,6 +42,7 @@ class ComponentWidget {
     // HACK: To get componentDidMount to be called after it isMounted,
     //       since it isn't called when mount is not given a parent element.
     setZeroTimeout(componentDidMount);
+    // TODO: add check for domNode
     this.component.domNode.component = this.component;
     // NOTE: since this is using thunk and a widget to render, virtual-dom
     //       will not consider any props in the component automatically.
@@ -173,6 +174,7 @@ export function fixProps(props) {
         props.checked : props.defaultChecked;
     }
     if (prop === 'style') {
+      // TODO: always merge into a fresh object
       let styles = props[prop];
       if (Array.isArray(styles)) styles = Object.assign(...styles);
       newProps[prop] = typeof styles === 'string' ? styles : fixProps.fixStyles(styles);
