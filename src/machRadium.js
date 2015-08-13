@@ -134,7 +134,7 @@ let Modernizr = (function( window, document, undefined ) {
     for ( let i in props ) {
       let prop = props[i];
       if ( !contains(prop, '-') && mStyle[prop] !== undefined ) {
-        return prefixed == 'pfx' ? prop : true;
+        return prefixed === 'pfx' ? prop : true;
       }
     }
     return false;
@@ -205,7 +205,7 @@ let Modernizr = (function( window, document, undefined ) {
   }
 
   Modernizr.addTest = function ( feature, test ) {
-    if ( typeof feature == 'object' ) {
+    if ( typeof feature === 'object' ) {
       for ( let key in feature ) {
         if ( hasOwnProp( feature, key ) ) {
           Modernizr.addTest( key, feature[ key ] );
@@ -216,7 +216,7 @@ let Modernizr = (function( window, document, undefined ) {
       if ( Modernizr[feature] !== undefined ) {
         return Modernizr;
       }
-      test = typeof test == 'function' ? test() : test;
+      test = typeof test === 'function' ? test() : test;
       if (typeof enableClasses !== 'undefined' && enableClasses) {
         docElement.className += ' ' + (test ? '' : 'no-') + feature;
       }

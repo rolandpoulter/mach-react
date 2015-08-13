@@ -122,6 +122,7 @@ class RefHook {
   }
 
   hook(domNode, propName, previousValue) {
+    // TODO: allow propsName to have a $ at the beginning to indicate that it is an array of refs
     this.component.refs[this.name] = domNode.component || domNode;
   }
 }

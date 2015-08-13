@@ -22,6 +22,8 @@ export class BaseComponent extends EventEmitter {
   context = {}
   childContext = {}
 
+  // TODO: automatically mixin this.mixins if defined.
+
   replaceObjectProperty(property, value, callback) {
     this[property] = this.assignObject({}, value);
   }
@@ -31,7 +33,6 @@ export class BaseComponent extends EventEmitter {
   }
 
   setupContext(parentComponent, rootComponent) {
-    // TODO: context code testing and cleanup.
     this.mergeObjectProperty('context', rootComponent.context);
     this.mergeObjectProperty('context', rootComponent.getChildContext());
     if (parentComponent && rootComponent !== parentComponent) {
@@ -89,7 +90,6 @@ export class BaseComponent extends EventEmitter {
       if (!this.shouldComponentUpdate(this.props, this.state)) return;
       this.componentWillUpdate(this.props, this.state);
     }
-    // NOTE: preserving refs is important for them to be available on did mount.
     this.refs = {};
     this.lastVirtualElement = this.virtualElement;
     this.virtualElement = this.safeRender();
