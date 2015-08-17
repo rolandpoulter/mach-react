@@ -615,7 +615,6 @@ var ComponentThunk = (function () {
           throw new Error('ComponentThunk: ' + previous.component.displayName + ': component mismatch');
         } else {
           previous.component.context = this.component.context;
-          // previous.component.replaceState(this.component.state);
           previous.component.replaceProps(this.component.props);
           this.component = previous.component;
         }
@@ -656,11 +655,8 @@ var ComponentWidget = (function () {
       this.component.safeUpdate();
       if (this.component.domNode) {
         this.component.domNode.component = this.component;
-        if (previous.component.props.refHook !== this.component.props.refHook) {
-          previous.component.props.refHook.unhook(previous.component.domNode, 'ref');
-        }
         if (this.component.props.refHook) {
-          this.component.props.refHook.hook(this.component.domNode, 'ref', previous.component.props.refHooke);
+          this.component.props.refHook.hook(this.component.domNode, 'ref');
         }
       }
       return this.component.domNode;
@@ -669,9 +665,6 @@ var ComponentWidget = (function () {
     key: 'destroy',
     value: function destroy(domNode) {
       this.component.unmount();
-      if (this.component.props.refHook) {
-        this.component.props.refHook.unhook(this.component.domNode, 'ref');
-      }
     }
   }]);
 
@@ -689,7 +682,7 @@ var HtmlHook = (function () {
 
   _createClass(HtmlHook, [{
     key: 'hook',
-    value: function hook(domNode, propName, previousValue) {
+    value: function hook(domNode, propName) {
       var html = this.value && this.value.__html || this.value;
       if (typeof html === 'string') domNode.innerHTML = html;
     }
@@ -785,7 +778,7 @@ function addEvent(elem, event, fn) {
 }
 
 function removeEvent(elem, event, fn) {
-  if (elem.addEventListener) elem.addEventListener(event, fn, false);else elem.attachEvent('on' + event, function () {
+  if (elem.addEventListener) elem.removeEventListener(event, fn, false);else elem.detachEvent('on' + event, function () {
     return fn.call(elem, window.event);
   });
 }
