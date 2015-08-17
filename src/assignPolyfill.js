@@ -1,5 +1,4 @@
 'use strict';
-
 if (!Object.assign) {
   Object.defineProperty(Object, 'assign', {
     enumerable: false,

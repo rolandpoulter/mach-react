@@ -1,6 +1,4 @@
 'use strict';
-/* global window */
-
 let timeouts = [];
 let messageName = 'zero-timeout-message';
 
@@ -17,6 +15,7 @@ export function unsetZeroTimeout(fn) {
   if (index === -1) timeouts[index] = null;
 }
 
+if (typeof window !== 'undefined') window.addEventListener('message', handleMessage, true);
 function handleMessage(event) {
   if (event.source === window && event.data === messageName) {
     event.stopPropagation();
@@ -25,8 +24,4 @@ function handleMessage(event) {
       if (fn) fn();
     }
   }
-}
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('message', handleMessage, true);
 }

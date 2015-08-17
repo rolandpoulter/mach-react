@@ -1,17 +1,13 @@
 'use strict';
-
-import { fixProps } from './virtualDOM';
+import { fixProps } from './machReact';
 
 let { fixStyles } = fixProps;
-
 fixProps.fixStyles = function machRadium(styles) {
   return autoPrefix.all(fixStyles(styles));
 }
 
 // NOTE: The following code was lifted from material-ui.
-
 const isBrowser = typeof window !== 'undefined';
-
 //Keep track of already prefixed keys so we can skip Modernizr prefixing
 let prefixedKeys = {};
 
@@ -24,11 +20,9 @@ let autoPrefix = {
     }
     return prefixedStyle;
   },
-
   set(style, key, value) {
     style[this.single(key)] = value;
   },
-
   single(key) {
     //If a browser doesn't exist, we can't prefix with Modernizr so
     //just return the key
@@ -44,7 +38,6 @@ let autoPrefix = {
     prefixedKeys[key] = prefKey;
     return prefKey;
   },
-
   singleHyphened(key) {
     let str = this.single(key);
     return !str ? key : str.replace(/([A-Z])/g, (str,m1) => {
@@ -102,11 +95,9 @@ let Modernizr = (function( window, document, undefined ) {
       },
       _hasOwnProperty = ({}).hasOwnProperty,
       hasOwnProp;
-
   function is( obj, type ) {
     return typeof obj === type;
   }
-
   if ( !is(_hasOwnProperty, 'undefined') && !is(_hasOwnProperty.call, 'undefined') ) {
     hasOwnProp = function (object, property) {
       return _hasOwnProperty.call(object, property);
@@ -117,19 +108,15 @@ let Modernizr = (function( window, document, undefined ) {
       return ((property in object) && is(object.constructor.prototype[property], 'undefined'));
     };
   }
-
   function setCss( str ) {
     mStyle.cssText = str;
   }
-
   function setCssAll( str1, str2 ) {
     return setCss(prefixes.join(str1 + ';') + ( str2 || '' ));
   }
-
   function contains( str, substr ) {
     return !!~('' + str).indexOf(substr);
   }
-
   function testProps( props, prefixed ) {
     for ( let i in props ) {
       let prop = props[i];
@@ -139,7 +126,6 @@ let Modernizr = (function( window, document, undefined ) {
     }
     return false;
   }
-
   function testDOMProps( props, obj, elem ) {
     for ( let i in props ) {
       let item = obj[props[i]];
@@ -153,7 +139,6 @@ let Modernizr = (function( window, document, undefined ) {
     }
     return false;
   }
-
   function testPropsAll( prop, prefixed, elem ) {
     let ucProp  = prop.charAt(0).toUpperCase() + prop.slice(1),
         props   = (prop + ' ' + cssomPrefixes.join(ucProp + ' ') + ucProp).split(' ');
@@ -164,24 +149,19 @@ let Modernizr = (function( window, document, undefined ) {
       return testDOMProps(props, prefixed, elem);
     }
   }
-
   tests.borderradius = function() {
     return testPropsAll('borderRadius');
   };
-
   tests.boxshadow = function() {
     return testPropsAll('boxShadow');
   };
-
   tests.opacity = function() {
     setCssAll('opacity:.55');
     return (/^0.55$/).test(mStyle.opacity);
   };
-
   tests.csstransforms = function() {
     return !!testPropsAll('transform');
   };
-
   tests.csstransforms3d = function() {
     let ret = !!testPropsAll('perspective');
     if ( ret && 'webkitPerspective' in docElement.style ) {
@@ -191,11 +171,9 @@ let Modernizr = (function( window, document, undefined ) {
     }
     return ret;
   };
-
   tests.csstransitions = function() {
     return testPropsAll('transition');
   };
-
   for ( let feature in tests ) {
     if ( hasOwnProp(tests, feature) ) {
       featureName  = feature.toLowerCase();
@@ -203,7 +181,6 @@ let Modernizr = (function( window, document, undefined ) {
       classes.push((Modernizr[featureName] ? '' : 'no-') + featureName);
     }
   }
-
   Modernizr.addTest = function ( feature, test ) {
     if ( typeof feature === 'object' ) {
       for ( let key in feature ) {
@@ -224,20 +201,15 @@ let Modernizr = (function( window, document, undefined ) {
     }
     return Modernizr;
   };
-
   setCss('');
-
   Modernizr._version      = version;
   Modernizr._prefixes     = prefixes;
   Modernizr._domPrefixes  = domPrefixes;
   Modernizr._cssomPrefixes  = cssomPrefixes;
-
   Modernizr.testProp      = function(prop){
     return testProps([prop]);
   };
-
   Modernizr.testAllProps  = testPropsAll;
-
   Modernizr.testStyles    = injectElementWithStyles;
   Modernizr.prefixed      = function(prop, obj, elem){
     if(!obj) {
@@ -246,6 +218,5 @@ let Modernizr = (function( window, document, undefined ) {
       return testPropsAll(prop, obj, elem);
     }
   };
-
   return Modernizr;
 })(window, window.document);
