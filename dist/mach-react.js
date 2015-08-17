@@ -9,7 +9,6 @@ if (!Object.assign) {
       if (target === undefined || target === null) {
         throw new TypeError('Cannot convert first argument to object');
       }
-
       var to = Object(target);
       for (var i = 1; i < arguments.length; i++) {
         var nextSource = arguments[i];
@@ -17,7 +16,6 @@ if (!Object.assign) {
           continue;
         }
         nextSource = Object(nextSource);
-
         var keysArray = Object.keys(Object(nextSource));
         for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
           var nextKey = keysArray[nextIndex];
@@ -512,17 +510,19 @@ var ReactComponent = (function (_BaseComponent) {
   _createClass(ReactComponent, null, [{
     key: 'Component',
     value: ReactComponent,
+
+    // componentDidMount() {}
+    // componentDidUnmount() {}
+    // componentDidUpdate(prevProps, prevState) {}
+    // componentWillMount() {}
+    // componentWillReceiveProps(nextProps) {}
+    // componentWillReceiveState(nextState) {}
+    // componentWillUnmount() {}
+    // componentWillUpdate(nextProps, nextState) {}
+    // render(React) { return null; }
+    // shouldComponentUpdate(nextProps, nextState) { return true; }
     enumerable: true
   }]);
-
-  // componentDidMount() {}
-  // componentDidUnmount() {}
-  // componentDidUpdate(prevProps, prevState) {}
-  // componentWillMount() {}
-  // componentWillReceiveProps(nextProps) {}
-  // componentWillReceiveState(nextState) {}
-  // componentWillUnmount() {}
-  // componentWillUpdate(nextProps, nextState) {}
 
   function ReactComponent(props, context) {
     _classCallCheck(this, ReactComponent);
@@ -553,8 +553,6 @@ var ReactComponent = (function (_BaseComponent) {
     value: function isMounted() {
       return this.domNode && this.domNode.parentNode;
     }
-
-    // render(React) { return null; }
   }, {
     key: 'replaceProps',
     value: function replaceProps(newProps, callback) {
@@ -582,8 +580,6 @@ var ReactComponent = (function (_BaseComponent) {
       this.mergeObjectProperty('state', nextState);
       this.queueUpdate(callback);
     }
-
-    // shouldComponentUpdate(nextProps, nextState) { return true; }
   }, {
     key: 'displayName',
     get: function get() {
@@ -616,8 +612,7 @@ var ComponentThunk = (function () {
     value: function render(previous) {
       if (previous && previous.component) {
         if (previous.component.displayName !== this.component.displayName) {
-          // TODO: leave this in to see if this ever happens.
-          throw new Error('Component mismatch!');
+          throw new Error('ComponentThunk: ' + previous.component.displayName + ': component mismatch');
         } else {
           previous.component.context = this.component.context;
           // previous.component.replaceState(this.component.state);
@@ -647,14 +642,9 @@ var ComponentWidget = (function () {
     key: 'init',
     value: function init() {
       var componentDidMount = this.component.mount();
-      // HACK: To get componentDidMount to be called after it isMounted,
-      //       since it isn't called when mount is not given a parent element.
+      if (!this.component.domNode) return;
       (0, _setZeroTimeout3['default'])(componentDidMount);
-      // TODO: add check for domNode
       this.component.domNode.component = this.component;
-      // NOTE: since this is using thunk and a widget to render, virtual-dom
-      //       will not consider any props in the component automatically.
-      //       This is why the hook is applied manually,
       if (this.component.props.refHook) {
         this.component.props.refHook.hook(this.component.domNode, 'ref');
       }
@@ -666,8 +656,11 @@ var ComponentWidget = (function () {
       this.component.safeUpdate();
       if (this.component.domNode) {
         this.component.domNode.component = this.component;
+        if (previous.component.props.refHook !== this.component.props.refHook) {
+          previous.component.props.refHook.unhook(previous.component.domNode, 'ref');
+        }
         if (this.component.props.refHook) {
-          this.component.props.refHook.hook(this.component.domNode, 'ref', previous);
+          this.component.props.refHook.hook(this.component.domNode, 'ref', previous.component.props.refHooke);
         }
       }
       return this.component.domNode;
@@ -676,6 +669,9 @@ var ComponentWidget = (function () {
     key: 'destroy',
     value: function destroy(domNode) {
       this.component.unmount();
+      if (this.component.props.refHook) {
+        this.component.props.refHook.unhook(this.component.domNode, 'ref');
+      }
     }
   }]);
 
@@ -830,9 +826,8 @@ function fixProps(props) {
       newProps.checked = typeof props.checked === 'boolean' ? props.checked : props.defaultChecked;
     }
     if (prop === 'style') {
-      // TODO: always merge into a fresh object
       var styles = props[prop];
-      if (Array.isArray(styles)) styles = Object.assign.apply(Object, _toConsumableArray(styles));
+      if (Array.isArray(styles)) styles = Object.assign.apply(Object, [{}].concat(_toConsumableArray(styles)));
       newProps[prop] = typeof styles === 'string' ? styles : fixProps.fixStyles(styles);
       return;
     }
@@ -902,7 +897,6 @@ function resolve(component) {
     domNode = (0, _virtualDom.patch)(domNode, _changes);
     if (domNode) domNode.component = component;
     if (component.domNode !== domNode && component.domNode.parentNode && !domNode.parentNode) {
-      // TODO: leave this in to confirm that we ever get here. Then take it out.
       console.warn(new Error(component.displayName + ': will replace domNode.').stack);
       component.domNode.parentNode.replaceNode(domNode, component.domNode);
     }
