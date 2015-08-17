@@ -4,10 +4,20 @@ import RealReact from 'react';
 
 import TodoAppFactory from './TodoApp';
 
+export let Point = {
+  0: 0, 1: 0, length: 2,
+  get x() { return this[0]; },
+  get y() { return this[1]; },
+  set x(v) { this[0] = v; },
+  set y(v) { this[1] = v; }
+};
+
 export default function (Component, _React) {
   let TodoApp = TodoAppFactory(Component, _React);
 
   return class TestComponent extends Component {
+    static mixins = [ Point ]
+
     type = _React === RealReact ? 'Real' : 'Mach';
     state = {
       times: [],
@@ -15,6 +25,7 @@ export default function (Component, _React) {
     };
 
     componentWillMount() {
+      console.log(this.x, this.y)
       // console.log('WILL MOUNT', this.type, this.refs);
     }
 
