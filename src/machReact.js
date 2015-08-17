@@ -113,6 +113,7 @@ export class BaseComponent extends EventEmitter {
   }
 }
 
+// TODO: add Component.prototype.defaultProps to make it easier to declare props defaults.
 export default class ReactComponent extends BaseComponent {
   static Component = ReactComponent;
   // componentDidMount() {}
