@@ -115,7 +115,6 @@ export class BaseComponent extends EventEmitter {
 
 export default class ReactComponent extends BaseComponent {
   static Component = ReactComponent;
-  autoUpdateWhenPropsChange = true;
   // componentDidMount() {}
   // componentDidUnmount() {}
   // componentDidUpdate(prevProps, prevState) {}
@@ -124,6 +123,9 @@ export default class ReactComponent extends BaseComponent {
   // componentWillReceiveState(nextState) {}
   // componentWillUnmount() {}
   // componentWillUpdate(nextProps, nextState) {}
+  // render(React) { return null; }
+  // shouldComponentUpdate(nextProps, nextState) { return true; }
+  autoUpdateWhenPropsChange = true;
   constructor(props, context) {
     super();
     props && (this.props = this.assignObject(this.props, props));
@@ -134,7 +136,6 @@ export default class ReactComponent extends BaseComponent {
   getChildContext() { return this.childContext; }
   getDOMNode() { return this.domNode; }
   isMounted() { return this.domNode && this.domNode.parentNode; }
-  // render(React) { return null; }
   replaceProps(newProps, callback) {
     this.replaceObjectProperty('props', newProps);
     this.autoUpdateWhenPropsChange && this.queueUpdate(callback);
@@ -154,7 +155,6 @@ export default class ReactComponent extends BaseComponent {
     this.mergeObjectProperty('state', nextState);
     this.queueUpdate(callback);
   }
-  // shouldComponentUpdate(nextProps, nextState) { return true; }
 }
 
 export let Component = ReactComponent;
@@ -170,8 +170,7 @@ export class ComponentThunk {
   render(previous) {
     if (previous && previous.component) {
       if (previous.component.displayName !== this.component.displayName) {
-        // TODO: leave this in to see if this ever happens.
-        throw new Error('Component mismatch!');
+        throw new Error('ComponentThunk: ' + previous.component.displayName + ': component mismatch');
       }
       else {
         previous.component.context = this.component.context;
@@ -191,14 +190,9 @@ export class ComponentWidget {
   }
   init() {
     let componentDidMount = this.component.mount();
-    // HACK: To get componentDidMount to be called after it isMounted,
-    //       since it isn't called when mount is not given a parent element.
+    if (!this.component.domNode) return;
     setZeroTimeout(componentDidMount);
-    // TODO: add check for domNode
     this.component.domNode.component = this.component;
-    // NOTE: since this is using thunk and a widget to render, virtual-dom
-    //       will not consider any props in the component automatically.
-    //       This is why the hook is applied manually,
     if (this.component.props.refHook) {
       this.component.props.refHook.hook(this.component.domNode, 'ref');
     }
@@ -208,14 +202,20 @@ export class ComponentWidget {
     this.component.safeUpdate();
     if (this.component.domNode) {
       this.component.domNode.component = this.component;
+      if (previous.component.props.refHook !== this.component.props.refHook) {
+        previous.component.props.refHook.unhook(previous.component.domNode, 'ref');
+      }
       if (this.component.props.refHook) {
-        this.component.props.refHook.hook(this.component.domNode, 'ref', previous);
+        this.component.props.refHook.hook(this.component.domNode, 'ref', previous.component.props.refHooke);
       }
     }
     return this.component.domNode;
   }
   destroy(domNode) {
     this.component.unmount();
+    if (this.component.props.refHook) {
+      this.component.props.refHook.unhook(this.component.domNode, 'ref');
+    }
   }
 }
 
@@ -320,9 +320,8 @@ export function fixProps(props) {
         props.checked : props.defaultChecked;
     }
     if (prop === 'style') {
-      // TODO: always merge into a fresh object
       let styles = props[prop];
-      if (Array.isArray(styles)) styles = Object.assign(...styles);
+      if (Array.isArray(styles)) styles = Object.assign({}, ...styles);
       newProps[prop] = typeof styles === 'string' ? styles : fixProps.fixStyles(styles);
       return;
     }
@@ -393,7 +392,6 @@ export function resolve(component) {
     domNode = patch(domNode, changes);
     if (domNode) domNode.component = component;
     if (component.domNode !== domNode && component.domNode.parentNode && !domNode.parentNode) {
-      // TODO: leave this in to confirm that we ever get here. Then take it out.
       console.warn(new Error(component.displayName + ': will replace domNode.').stack);
       component.domNode.parentNode.replaceNode(domNode, component.domNode);
     }

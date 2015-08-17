@@ -1,328 +1,80 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.virtualDom = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var _events = require('events');
-
-var _virtualDOM = require('./virtualDOM');
-
-var _machReact = require('./machReact');
-
-var machReact = _interopRequireWildcard(_machReact);
-
-var _setZeroTimeout = require('./setZeroTimeout');
-
-var _setZeroTimeout2 = _interopRequireDefault(_setZeroTimeout);
-
-// NOTE: BaseComponent is extended to make ReactComponent.
-
-var BaseComponent = (function (_EventEmitter) {
-  _inherits(BaseComponent, _EventEmitter);
-
-  function BaseComponent() {
-    _classCallCheck(this, BaseComponent);
-
-    _get(Object.getPrototypeOf(BaseComponent.prototype), 'constructor', this).apply(this, arguments);
-
-    this.machReact = machReact;
-    this.assignObject = Object.assign;
-    this.resolveDOM = _virtualDOM.resolve;
-    this.appendDOM = _virtualDOM.attach;
-    this.removeDOM = _virtualDOM.detach;
-    this.state = {};
-    this.props = {};
-    this.context = {};
-    this.childContext = {};
-    this.isUpdating = false;
-  }
-
-  _createClass(BaseComponent, [{
-    key: 'replaceObjectProperty',
-    value: function replaceObjectProperty(property, value, callback) {
-      this[property] = this.assignObject({}, value);
-    }
-  }, {
-    key: 'mergeObjectProperty',
-    value: function mergeObjectProperty(property, value, callback) {
-      this[property] = this.assignObject(this[property], value);
-    }
-  }, {
-    key: 'setupContext',
-    value: function setupContext(parentComponent, rootComponent) {
-      // TODO: context code testing and cleanup.
-      this.mergeObjectProperty('context', rootComponent.context);
-      this.mergeObjectProperty('context', rootComponent.getChildContext());
-      if (parentComponent && rootComponent !== parentComponent) {
-        this.mergeObjectProperty('context', parentComponent.getChildContext());
+if (!Object.assign) {
+  Object.defineProperty(Object, 'assign', {
+    enumerable: false,
+    configurable: true,
+    writable: true,
+    value: function value(target) {
+      if (target === undefined || target === null) {
+        throw new TypeError('Cannot convert first argument to object');
       }
-    }
-  }, {
-    key: 'queueUpdate',
-    value: function queueUpdate(callback) {
-      if (callback) this.once('updated', callback);
-      if (this.isUpdating) return;
-      this.updateFunc = this.update.bind(this);
-      this.isUpdating = true;
-      (0, _setZeroTimeout2['default'])(this.updateFunc);
-    }
-  }, {
-    key: 'cancelUpdate',
-    value: function cancelUpdate() {
-      if (this.isUpdating) {
-        (0, _setZeroTimeout.unsetZeroTimeout)(this.updateFunc);
-        this.isUpdating = false;
-        this.updateFunc = null;
+
+      var to = Object(target);
+      for (var i = 1; i < arguments.length; i++) {
+        var nextSource = arguments[i];
+        if (nextSource === undefined || nextSource === null) {
+          continue;
+        }
+        nextSource = Object(nextSource);
+
+        var keysArray = Object.keys(Object(nextSource));
+        for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
+          var nextKey = keysArray[nextIndex];
+          var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);
+          if (desc !== undefined && desc.enumerable) {
+            to[nextKey] = nextSource[nextKey];
+          }
+        }
       }
+      return to;
     }
-  }, {
-    key: 'mount',
-    value: function mount(parent) {
-      this.refs = {};
-      this.componentWillMount();
-      this.update(true);
-      if (parent) {
-        this.appendDOM(this.domNode, parent);
-        this.componentDidMount();
-      } else return this.componentDidMount.bind(this);
-    }
-  }, {
-    key: 'unmount',
-    value: function unmount() {
-      console.log('unmount', new Error().stack);
-      this.componentWillUnmount();
-      this.lastVirtualElement = this.virtualElement;
-      this.virtualElement = null;
-      this.domNode = this.resolveDOM(this);
-      this.lastVirtualElement = null;
-      var parent = this.domNode && this.domNode.parentNode;
-      if (parent) this.removeDOM(this.domNode);
-      this.componentDidUnmount();
-      if (this.domNode) {
-        this.domNode.component = null;
-        this.domNode = null;
-      }
-    }
-  }, {
-    key: 'update',
-    value: function update(force) {
-      var _this = this;
-
-      if (!force) {
-        if (!this.shouldComponentUpdate(this.props, this.state)) return;
-        this.componentWillUpdate(this.props, this.state);
-      }
-      // NOTE: preserving refs is important for them to be available on did mount.
-      this.refs = {};
-      this.lastVirtualElement = this.virtualElement;
-      this.virtualElement = this.safeRender();
-      this.domNode = this.resolveDOM(this);
-      var finishUpdate = function finishUpdate() {
-        if (!force) _this.componentDidUpdate();
-        _this.emit('updated');
-        _this.isUpdating = false;
-        _this.updateFunc = null;
-      };
-      (0, _setZeroTimeout2['default'])(finishUpdate);
-    }
-  }, {
-    key: 'safeRender',
-    value: function safeRender() {
-      if (!this.render) throw new Error('Component missing render method.');
-      return this.render(this.machReact);
-    }
-  }, {
-    key: 'safeUpdate',
-    value: function safeUpdate(force) {
-      if (force || !this.isUpdating) {
-        this.cancelUpdate();
-        this.update(force);
-      }
-    }
-  }]);
-
-  return BaseComponent;
-})(_events.EventEmitter);
-
-exports.BaseComponent = BaseComponent;
-
-var ReactComponent = (function (_BaseComponent) {
-  _inherits(ReactComponent, _BaseComponent);
-
-  function ReactComponent(props, context) {
-    _classCallCheck(this, ReactComponent);
-
-    _get(Object.getPrototypeOf(ReactComponent.prototype), 'constructor', this).call(this);
-    this.autoUpdateWhenPropsChange = true;
-    if (props) this.props = this.assignObject(this.props, props);
-    if (context) this.context = this.assignObject(this.context, context);
-  }
-
-  _createClass(ReactComponent, [{
-    key: 'getDOMNode',
-    value: function getDOMNode() {
-      return this.domNode;
-    }
-  }, {
-    key: 'replaceState',
-    value: function replaceState(newState, callback) {
-      this.replaceObjectProperty('state', newState);
-      this.queueUpdate(callback);
-    }
-  }, {
-    key: 'setState',
-    value: function setState(nextState, callback) {
-      if (typeof nextState === 'function') nextState = nextState(this.state, this.props);
-      this.componentWillReceiveState(nextState);
-      this.mergeObjectProperty('state', nextState);
-      this.queueUpdate(callback);
-    }
-  }, {
-    key: 'replaceProps',
-    value: function replaceProps(newProps, callback) {
-      // Not in React anymore
-      this.replaceObjectProperty('props', newProps);
-      if (this.autoUpdateWhenPropsChange) this.queueUpdate();
-    }
-  }, {
-    key: 'setProps',
-    value: function setProps(nextProps, callback) {
-      // Not in React anymore
-      this.componentWillReceiveProps(nextProps);
-      this.mergeObjectProperty('props', nextProps);
-      if (this.autoUpdateWhenPropsChange) this.queueUpdate();
-    }
-  }, {
-    key: 'forceUpdate',
-    value: function forceUpdate() {
-      this.update(true);
-    }
-  }, {
-    key: 'isMounted',
-    value: function isMounted() {
-      return this.domNode && this.domNode.parentNode;
-    }
-  }, {
-    key: 'getChildContext',
-    value: function getChildContext() {
-      return this.childContext || {};
-    }
-  }, {
-    key: 'componentWillMount',
-    value: function componentWillMount() {}
-  }, {
-    key: 'componentDidMount',
-    value: function componentDidMount() {}
-  }, {
-    key: 'componentWillReceiveState',
-    value: function componentWillReceiveState(nextState) {}
-    // Not from React.
-  }, {
-    key: 'componentWillReceiveProps',
-    value: function componentWillReceiveProps(nextProps) {}
-  }, {
-    key: 'componentWillUpdate',
-    value: function componentWillUpdate(nextProps, nextState) {}
-  }, {
-    key: 'componentDidUpdate',
-    value: function componentDidUpdate(prevProps, prevState) {}
-  }, {
-    key: 'componentWillUnmount',
-    value: function componentWillUnmount() {}
-  }, {
-    key: 'componentDidUnmount',
-    value: function componentDidUnmount() {}
-    // Not from React.
-
-  }, {
-    key: 'shouldComponentUpdate',
-    value: function shouldComponentUpdate(nextProps, nextState) {
-      return true;
-    }
-  }, {
-    key: 'render',
-    value: function render(React) {
-      return null;
-    }
-  }, {
-    key: 'displayName',
-    get: function get() {
-      return this.constructor.name;
-    }
-  }]);
-
-  return ReactComponent;
-})(BaseComponent);
-
-exports['default'] = ReactComponent;
-},{"./machReact":4,"./setZeroTimeout":7,"./virtualDOM":8,"events":10}],2:[function(require,module,exports){
+  });
+}
+},{}],2:[function(require,module,exports){
 (function (global){
 'use strict';
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-require('./polyfill');
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+
+var _machReact2 = require('./machReact');
+
+var machReact = _interopRequireWildcard(_machReact2);
 
 var _machRadium = require('./machRadium');
 
 var _machRadium2 = _interopRequireDefault(_machRadium);
 
-var _machReact = require('./machReact');
+var _machReact = _interopRequireWildcard(_machReact2);
 
-var machReact = _interopRequireWildcard(_machReact);
-
-var _Component2 = require('./Component');
-
-var _Component3 = _interopRequireDefault(_Component2);
-
-exports.Component = _Component3['default'];
+exports.machReact = _machReact;
 
 var React = machReact;
 exports['default'] = React;
+var Component = React.Component;
 
-var _mixin2 = require('./mixin');
-
-var _mixin3 = _interopRequireDefault(_mixin2);
-
-exports.mixin = _mixin3['default'];
-
+exports.Component = Component;
 if (!global.React) global.React = machReact;
 global.machReact = machReact;
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./Component":1,"./machRadium":3,"./machReact":4,"./mixin":5,"./polyfill":6}],3:[function(require,module,exports){
+},{"./machRadium":3,"./machReact":4}],3:[function(require,module,exports){
 'use strict';
 
-var _virtualDOM = require('./virtualDOM');
+var _machReact = require('./machReact');
 
-var fixStyles = _virtualDOM.fixProps.fixStyles;
+var fixStyles = _machReact.fixProps.fixStyles;
 
-_virtualDOM.fixProps.fixStyles = function machRadium(styles) {
+_machReact.fixProps.fixStyles = function machRadium(styles) {
   return autoPrefix.all(fixStyles(styles));
 };
 
 // NOTE: The following code was lifted from material-ui.
-
 var isBrowser = typeof window !== 'undefined';
-
 //Keep track of already prefixed keys so we can skip Modernizr prefixing
 var prefixedKeys = {};
 
@@ -335,11 +87,9 @@ var autoPrefix = {
     }
     return prefixedStyle;
   },
-
   set: function set(style, key, value) {
     style[this.single(key)] = value;
   },
-
   single: function single(key) {
     //If a browser doesn't exist, we can't prefix with Modernizr so
     //just return the key
@@ -355,7 +105,6 @@ var autoPrefix = {
     prefixedKeys[key] = prefKey;
     return prefKey;
   },
-
   singleHyphened: function singleHyphened(key) {
     var str = this.single(key);
     return !str ? key : str.replace(/([A-Z])/g, function (str, m1) {
@@ -416,11 +165,9 @@ var Modernizr = (function (window, document, undefined) {
   },
       _hasOwnProperty = ({}).hasOwnProperty,
       hasOwnProp = undefined;
-
   function is(obj, type) {
     return typeof obj === type;
   }
-
   if (!is(_hasOwnProperty, 'undefined') && !is(_hasOwnProperty.call, 'undefined')) {
     hasOwnProp = function (object, property) {
       return _hasOwnProperty.call(object, property);
@@ -430,29 +177,24 @@ var Modernizr = (function (window, document, undefined) {
       return property in object && is(object.constructor.prototype[property], 'undefined');
     };
   }
-
   function setCss(str) {
     mStyle.cssText = str;
   }
-
   function setCssAll(str1, str2) {
     return setCss(prefixes.join(str1 + ';') + (str2 || ''));
   }
-
   function contains(str, substr) {
     return !! ~('' + str).indexOf(substr);
   }
-
   function testProps(props, prefixed) {
     for (var i in props) {
       var prop = props[i];
       if (!contains(prop, '-') && mStyle[prop] !== undefined) {
-        return prefixed == 'pfx' ? prop : true;
+        return prefixed === 'pfx' ? prop : true;
       }
     }
     return false;
   }
-
   function testDOMProps(props, obj, elem) {
     for (var i in props) {
       var item = obj[props[i]];
@@ -466,7 +208,6 @@ var Modernizr = (function (window, document, undefined) {
     }
     return false;
   }
-
   function testPropsAll(prop, prefixed, elem) {
     var ucProp = prop.charAt(0).toUpperCase() + prop.slice(1),
         props = (prop + ' ' + cssomPrefixes.join(ucProp + ' ') + ucProp).split(' ');
@@ -477,25 +218,20 @@ var Modernizr = (function (window, document, undefined) {
       return testDOMProps(props, prefixed, elem);
     }
   }
-
   tests.borderradius = function () {
     return testPropsAll('borderRadius');
   };
-
   tests.boxshadow = function () {
     return testPropsAll('boxShadow');
   };
-
   tests.opacity = function () {
     setCssAll('opacity:.55');
     return (/^0.55$/.test(mStyle.opacity)
     );
   };
-
   tests.csstransforms = function () {
     return !!testPropsAll('transform');
   };
-
   tests.csstransforms3d = function () {
     var ret = !!testPropsAll('perspective');
     if (ret && 'webkitPerspective' in docElement.style) {
@@ -505,11 +241,9 @@ var Modernizr = (function (window, document, undefined) {
     }
     return ret;
   };
-
   tests.csstransitions = function () {
     return testPropsAll('transition');
   };
-
   for (var feature in tests) {
     if (hasOwnProp(tests, feature)) {
       featureName = feature.toLowerCase();
@@ -517,9 +251,8 @@ var Modernizr = (function (window, document, undefined) {
       classes.push((Modernizr[featureName] ? '' : 'no-') + featureName);
     }
   }
-
   Modernizr.addTest = function (feature, test) {
-    if (typeof feature == 'object') {
+    if (typeof feature === 'object') {
       for (var key in feature) {
         if (hasOwnProp(feature, key)) {
           Modernizr.addTest(key, feature[key]);
@@ -530,7 +263,7 @@ var Modernizr = (function (window, document, undefined) {
       if (Modernizr[feature] !== undefined) {
         return Modernizr;
       }
-      test = typeof test == 'function' ? test() : test;
+      test = typeof test === 'function' ? test() : test;
       if (typeof enableClasses !== 'undefined' && enableClasses) {
         docElement.className += ' ' + (test ? '' : 'no-') + feature;
       }
@@ -538,20 +271,15 @@ var Modernizr = (function (window, document, undefined) {
     }
     return Modernizr;
   };
-
   setCss('');
-
   Modernizr._version = version;
   Modernizr._prefixes = prefixes;
   Modernizr._domPrefixes = domPrefixes;
   Modernizr._cssomPrefixes = cssomPrefixes;
-
   Modernizr.testProp = function (prop) {
     return testProps([prop]);
   };
-
   Modernizr.testAllProps = testPropsAll;
-
   Modernizr.testStyles = injectElementWithStyles;
   Modernizr.prefixed = function (prop, obj, elem) {
     if (!obj) {
@@ -560,148 +288,19 @@ var Modernizr = (function (window, document, undefined) {
       return testPropsAll(prop, obj, elem);
     }
   };
-
   return Modernizr;
 })(window, window.document);
-},{"./virtualDOM":8}],4:[function(require,module,exports){
+},{"./machReact":4}],4:[function(require,module,exports){
 'use strict';
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-exports.createElement = createElement;
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
-
-var _virtualDOM = require('./virtualDOM');
-
-Object.defineProperty(exports, 'render', {
-  enumerable: true,
-  get: function get() {
-    return _virtualDOM.render;
-  }
-});
-
-var _VirtualDOM = _interopRequireWildcard(_virtualDOM);
-
-exports.VirtualDOM = _VirtualDOM;
-
-var _Component2 = require('./Component');
-
-var _Component3 = _interopRequireDefault(_Component2);
-
-exports.Component = _Component3['default'];
-
-function createElement(type, props) {
-  for (var _len = arguments.length, children = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
-    children[_key - 2] = arguments[_key];
-  }
-
-  return (0, _virtualDOM.create)(type, props, children);
-}
-},{"./Component":1,"./virtualDOM":8}],5:[function(require,module,exports){
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-exports['default'] = mixin;
-
-function mixin() {
-  for (var _len = arguments.length, mixins = Array(_len), _key = 0; _key < _len; _key++) {
-    mixins[_key] = arguments[_key];
-  }
-
-  return function decorator(Class) {
-    Object.assign.apply(Object, [Class.prototype].concat(mixins));
-  };
-}
-
-module.exports = exports['default'];
-},{}],6:[function(require,module,exports){
-'use strict';
-
-if (!Object.assign) {
-  Object.defineProperty(Object, 'assign', {
-    enumerable: false,
-    configurable: true,
-    writable: true,
-    value: function value(target) {
-      'use strict';
-      if (target === undefined || target === null) {
-        throw new TypeError('Cannot convert first argument to object');
-      }
-
-      var to = Object(target);
-      for (var i = 1; i < arguments.length; i++) {
-        var nextSource = arguments[i];
-        if (nextSource === undefined || nextSource === null) {
-          continue;
-        }
-        nextSource = Object(nextSource);
-
-        var keysArray = Object.keys(Object(nextSource));
-        for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
-          var nextKey = keysArray[nextIndex];
-          var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);
-          if (desc !== undefined && desc.enumerable) {
-            to[nextKey] = nextSource[nextKey];
-          }
-        }
-      }
-      return to;
-    }
-  });
-}
-},{}],7:[function(require,module,exports){
-(function (global){
-'use strict';
-/* global window */
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-exports['default'] = setZeroTimeout;
-exports.unsetZeroTimeout = unsetZeroTimeout;
-var timeouts = [];
-var messageName = 'zero-timeout-message';
-
-function setZeroTimeout(fn) {
-  if (global.postMessage) {
-    if (timeouts.indexOf(fn) === -1) timeouts.push(fn);
-    global.postMessage(messageName, '*');
-  } else setTimeout(fn, 0);
-}
-
-function unsetZeroTimeout(fn) {
-  var index = timeouts.indexOf(fn);
-  if (index === -1) timeouts[index] = null;
-}
-
-function handleMessage(event) {
-  if (event.source === window && event.data === messageName) {
-    event.stopPropagation();
-    if (timeouts.length > 0) {
-      var fn = timeouts.shift();
-      if (fn) fn();
-    }
-  }
-}
-
-if (typeof window !== 'undefined') {
-  window.addEventListener('message', handleMessage, true);
-}
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],8:[function(require,module,exports){
-'use strict';
-
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
+var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+
+exports.createElement = createElement;
 exports.addEvent = addEvent;
 exports.removeEvent = removeEvent;
 exports.attach = attach;
@@ -718,11 +317,287 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
+function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+require('./assignPolyfill');
+
+var _setZeroTimeout2 = require('./setZeroTimeout');
+
+var _setZeroTimeout3 = _interopRequireDefault(_setZeroTimeout2);
+
+var _events = require('events');
+
 var _virtualDom = require('virtual-dom');
 
-var _setZeroTimeout = require('./setZeroTimeout');
+var _setZeroTimeout4 = _interopRequireDefault(_setZeroTimeout2);
 
-var _setZeroTimeout2 = _interopRequireDefault(_setZeroTimeout);
+exports.setZeroTimeout = _setZeroTimeout4['default'];
+Object.defineProperty(exports, 'EventEmitter', {
+  enumerable: true,
+  get: function get() {
+    return _events.EventEmitter;
+  }
+});
+
+function createElement(type, props) {
+  for (var _len = arguments.length, children = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+    children[_key - 2] = arguments[_key];
+  }
+
+  return create(type, props, children);
+}
+
+var BaseComponent = (function (_EventEmitter) {
+  _inherits(BaseComponent, _EventEmitter);
+
+  _createClass(BaseComponent, null, [{
+    key: 'mixin',
+    value: function mixin(constructor) {
+      var prototype = constructor.prototype;
+      if (prototype && constructor.mixins && !constructor.mixins.done) {
+        constructor.assignObject.apply(constructor, [prototype].concat(_toConsumableArray(constructor.mixins)));
+        constructor.mixins.done = true;
+      }
+    }
+  }, {
+    key: 'appendDOM',
+    value: attach,
+    enumerable: true
+  }, {
+    key: 'assignObject',
+    value: Object.assign,
+    enumerable: true
+  }, {
+    key: 'createElement',
+    value: createElement,
+    enumerable: true
+  }, {
+    key: 'removeDOM',
+    value: detach,
+    enumerable: true
+  }, {
+    key: 'resolveDOM',
+    value: resolve,
+    enumerable: true
+  }]);
+
+  function BaseComponent() {
+    _classCallCheck(this, BaseComponent);
+
+    _get(Object.getPrototypeOf(BaseComponent.prototype), 'constructor', this).call(this);
+    this.assignObject = this.constructor.assignObject;
+    this.resolveDOM = this.constructor.resolveDOM;
+    this.childContext = {};
+    this.context = {};
+    this.props = {};
+    this.state = {};
+    this.isUpdating = false;
+    this.constructor.mixin && this.constructor.mixin(this.constructor);
+  }
+
+  _createClass(BaseComponent, [{
+    key: 'cancelUpdate',
+    value: function cancelUpdate() {
+      if (this.isUpdating) {
+        unsetZeroTimeout(this.updateFunc);
+        this.isUpdating = false;
+        this.updateFunc = null;
+      }
+      return this;
+    }
+  }, {
+    key: 'mergeObjectProperty',
+    value: function mergeObjectProperty(property, value, callback) {
+      this[property] = this.assignObject(this[property], value);
+    }
+  }, {
+    key: 'mount',
+    value: function mount(parent) {
+      var _this = this;
+
+      this.refs = {};
+      this.componentWillMount && this.componentWillMount();
+      this.update(true);
+      var finishMount = function finishMount() {
+        _this.componentDidMount && _this.componentDidMount();
+        _this.emit('mount');
+      };
+      if (parent) {
+        this.constructor.appendDOM(this.domNode, parent);
+        return finishMount();
+      }
+      return finishMount;
+    }
+  }, {
+    key: 'queueUpdate',
+    value: function queueUpdate(callback) {
+      if (callback) this.once('update', callback);
+      if (this.isUpdating) return;
+      this.updateFunc = this.update.bind(this);
+      this.isUpdating = true;
+      (0, _setZeroTimeout3['default'])(this.updateFunc);
+    }
+  }, {
+    key: 'replaceObjectProperty',
+    value: function replaceObjectProperty(property, value, callback) {
+      this[property] = this.assignObject({}, value);
+    }
+  }, {
+    key: 'safeRender',
+    value: function safeRender() {
+      return this.render(this.constructor);
+    }
+  }, {
+    key: 'safeUpdate',
+    value: function safeUpdate(force) {
+      (force || !this.isUpdating) && this.cancelUpdate().update(force);
+    }
+  }, {
+    key: 'setupContext',
+    value: function setupContext(parentComponent, rootComponent) {
+      this.mergeObjectProperty('context', rootComponent.context);
+      this.mergeObjectProperty('context', rootComponent.getChildContext());
+      if (parentComponent && rootComponent !== parentComponent) {
+        this.mergeObjectProperty('context', parentComponent.getChildContext());
+      }
+    }
+  }, {
+    key: 'unmount',
+    value: function unmount() {
+      this.componentWillUnmount && his.componentWillUnmount();
+      this.lastVirtualElement = this.virtualElement;
+      this.virtualElement = null;
+      this.domNode = this.resolveDOM(this);
+      this.lastVirtualElement = null;
+      var parent = this.domNode && this.domNode.parentNode;
+      if (parent) this.constructor.removeDOM(this.domNode);
+      this.componentDidUnmount && this.componentDidUnmount();
+      this.emit('unmount');
+      if (this.domNode) {
+        this.domNode.component = null;
+        this.domNode = null;
+      }
+    }
+  }, {
+    key: 'update',
+    value: function update(force) {
+      var _this2 = this;
+
+      if (!force) {
+        if (this.shouldComponentUpdate && !this.shouldComponentUpdate(this.props, this.state)) return;
+        this.componentWillUpdate && this.componentWillUpdate(this.props, this.state);
+      }
+      this.refs = {};
+      this.lastVirtualElement = this.virtualElement;
+      this.virtualElement = this.safeRender();
+      this.domNode = this.resolveDOM(this);
+      var finishUpdate = function finishUpdate() {
+        !force && _this2.componentDidUpdate && _this2.componentDidUpdate();
+        _this2.emit('update');
+        _this2.isUpdating = false;
+        _this2.updateFunc = null;
+      };
+      (0, _setZeroTimeout3['default'])(finishUpdate);
+    }
+  }]);
+
+  return BaseComponent;
+})(_events.EventEmitter);
+
+exports.BaseComponent = BaseComponent;
+
+var ReactComponent = (function (_BaseComponent) {
+  _inherits(ReactComponent, _BaseComponent);
+
+  _createClass(ReactComponent, null, [{
+    key: 'Component',
+    value: ReactComponent,
+    enumerable: true
+  }]);
+
+  // componentDidMount() {}
+  // componentDidUnmount() {}
+  // componentDidUpdate(prevProps, prevState) {}
+  // componentWillMount() {}
+  // componentWillReceiveProps(nextProps) {}
+  // componentWillReceiveState(nextState) {}
+  // componentWillUnmount() {}
+  // componentWillUpdate(nextProps, nextState) {}
+
+  function ReactComponent(props, context) {
+    _classCallCheck(this, ReactComponent);
+
+    _get(Object.getPrototypeOf(ReactComponent.prototype), 'constructor', this).call(this);
+    this.autoUpdateWhenPropsChange = true;
+    props && (this.props = this.assignObject(this.props, props));
+    context && (this.context = this.assignObject(this.context, context));
+  }
+
+  _createClass(ReactComponent, [{
+    key: 'forceUpdate',
+    value: function forceUpdate() {
+      this.update(true);
+    }
+  }, {
+    key: 'getChildContext',
+    value: function getChildContext() {
+      return this.childContext;
+    }
+  }, {
+    key: 'getDOMNode',
+    value: function getDOMNode() {
+      return this.domNode;
+    }
+  }, {
+    key: 'isMounted',
+    value: function isMounted() {
+      return this.domNode && this.domNode.parentNode;
+    }
+
+    // render(React) { return null; }
+  }, {
+    key: 'replaceProps',
+    value: function replaceProps(newProps, callback) {
+      this.replaceObjectProperty('props', newProps);
+      this.autoUpdateWhenPropsChange && this.queueUpdate(callback);
+    }
+  }, {
+    key: 'replaceState',
+    value: function replaceState(newState, callback) {
+      this.replaceObjectProperty('state', newState);
+      this.queueUpdate(callback);
+    }
+  }, {
+    key: 'setProps',
+    value: function setProps(nextProps, callback) {
+      this.componentWillReceiveProps && this.componentWillReceiveProps(nextProps);
+      this.mergeObjectProperty('props', nextProps);
+      this.autoUpdateWhenPropsChange && this.queueUpdate(callback);
+    }
+  }, {
+    key: 'setState',
+    value: function setState(nextState, callback) {
+      if (typeof nextState === 'function') nextState = nextState(this.state, this.props);
+      this.componentWillReceiveState && this.componentWillReceiveState(nextState);
+      this.mergeObjectProperty('state', nextState);
+      this.queueUpdate(callback);
+    }
+
+    // shouldComponentUpdate(nextProps, nextState) { return true; }
+  }, {
+    key: 'displayName',
+    get: function get() {
+      return this.constructor.name;
+    }
+  }]);
+
+  return ReactComponent;
+})(BaseComponent);
+
+exports['default'] = ReactComponent;
+var Component = ReactComponent;
+
+exports.Component = Component;
 
 var ComponentThunk = (function () {
   function ComponentThunk(Component, props, children, context) {
@@ -757,6 +632,8 @@ var ComponentThunk = (function () {
   return ComponentThunk;
 })();
 
+exports.ComponentThunk = ComponentThunk;
+
 var ComponentWidget = (function () {
   function ComponentWidget(component) {
     _classCallCheck(this, ComponentWidget);
@@ -772,7 +649,8 @@ var ComponentWidget = (function () {
       var componentDidMount = this.component.mount();
       // HACK: To get componentDidMount to be called after it isMounted,
       //       since it isn't called when mount is not given a parent element.
-      (0, _setZeroTimeout2['default'])(componentDidMount);
+      (0, _setZeroTimeout3['default'])(componentDidMount);
+      // TODO: add check for domNode
       this.component.domNode.component = this.component;
       // NOTE: since this is using thunk and a widget to render, virtual-dom
       //       will not consider any props in the component automatically.
@@ -804,6 +682,8 @@ var ComponentWidget = (function () {
   return ComponentWidget;
 })();
 
+exports.ComponentWidget = ComponentWidget;
+
 var HtmlHook = (function () {
   function HtmlHook(value) {
     _classCallCheck(this, HtmlHook);
@@ -821,6 +701,8 @@ var HtmlHook = (function () {
 
   return HtmlHook;
 })();
+
+exports.HtmlHook = HtmlHook;
 
 var OnChangeHook = (function () {
   function OnChangeHook(handler) {
@@ -874,6 +756,8 @@ var OnChangeHook = (function () {
   return OnChangeHook;
 })();
 
+exports.OnChangeHook = OnChangeHook;
+
 var RefHook = (function () {
   function RefHook(name, component) {
     _classCallCheck(this, RefHook);
@@ -885,12 +769,18 @@ var RefHook = (function () {
   _createClass(RefHook, [{
     key: 'hook',
     value: function hook(domNode, propName, previousValue) {
-      this.component.refs[this.name] = domNode.component || domNode;
+      var refs = this.component.refs;
+      if (this.name.charAt(0) === '$') {
+        refs[this.name] = refs[this.name] || [];
+        refs[this.name].push(domNode.component || domNode);
+      } else refs[this.name] = domNode.component || domNode;
     }
   }]);
 
   return RefHook;
 })();
+
+exports.RefHook = RefHook;
 
 function addEvent(elem, event, fn) {
   if (elem.addEventListener) elem.addEventListener(event, fn, false);else elem.attachEvent('on' + event, function () {
@@ -940,6 +830,7 @@ function fixProps(props) {
       newProps.checked = typeof props.checked === 'boolean' ? props.checked : props.defaultChecked;
     }
     if (prop === 'style') {
+      // TODO: always merge into a fresh object
       var styles = props[prop];
       if (Array.isArray(styles)) styles = Object.assign.apply(Object, _toConsumableArray(styles));
       newProps[prop] = typeof styles === 'string' ? styles : fixProps.fixStyles(styles);
@@ -1041,9 +932,43 @@ function walkVirtual(definition, iterator, parent, root, parentComponent) {
     });
   }
 }
-},{"./setZeroTimeout":7,"virtual-dom":14}],9:[function(require,module,exports){
+},{"./assignPolyfill":1,"./setZeroTimeout":5,"events":7,"virtual-dom":11}],5:[function(require,module,exports){
+(function (global){
+'use strict';
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+exports['default'] = setZeroTimeout;
+exports.unsetZeroTimeout = unsetZeroTimeout;
+var timeouts = [];
+var messageName = 'zero-timeout-message';
 
-},{}],10:[function(require,module,exports){
+function setZeroTimeout(fn) {
+  if (global.postMessage) {
+    if (timeouts.indexOf(fn) === -1) timeouts.push(fn);
+    global.postMessage(messageName, '*');
+  } else setTimeout(fn, 0);
+}
+
+function unsetZeroTimeout(fn) {
+  var index = timeouts.indexOf(fn);
+  if (index === -1) timeouts[index] = null;
+}
+
+if (typeof window !== 'undefined') window.addEventListener('message', handleMessage, true);
+function handleMessage(event) {
+  if (event.source === window && event.data === messageName) {
+    event.stopPropagation();
+    if (timeouts.length > 0) {
+      var fn = timeouts.shift();
+      if (fn) fn();
+    }
+  }
+}
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{}],6:[function(require,module,exports){
+
+},{}],7:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1346,22 +1271,22 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],11:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var createElement = require("./vdom/create-element.js")
 
 module.exports = createElement
 
-},{"./vdom/create-element.js":24}],12:[function(require,module,exports){
+},{"./vdom/create-element.js":21}],9:[function(require,module,exports){
 var diff = require("./vtree/diff.js")
 
 module.exports = diff
 
-},{"./vtree/diff.js":44}],13:[function(require,module,exports){
+},{"./vtree/diff.js":41}],10:[function(require,module,exports){
 var h = require("./virtual-hyperscript/index.js")
 
 module.exports = h
 
-},{"./virtual-hyperscript/index.js":31}],14:[function(require,module,exports){
+},{"./virtual-hyperscript/index.js":28}],11:[function(require,module,exports){
 var diff = require("./diff.js")
 var patch = require("./patch.js")
 var h = require("./h.js")
@@ -1378,7 +1303,7 @@ module.exports = {
     VText: VText
 }
 
-},{"./create-element.js":11,"./diff.js":12,"./h.js":13,"./patch.js":22,"./vnode/vnode.js":40,"./vnode/vtext.js":42}],15:[function(require,module,exports){
+},{"./create-element.js":8,"./diff.js":9,"./h.js":10,"./patch.js":19,"./vnode/vnode.js":37,"./vnode/vtext.js":39}],12:[function(require,module,exports){
 /*!
  * Cross-Browser Split 1.1.1
  * Copyright 2007-2012 Steven Levithan <stevenlevithan.com>
@@ -1486,7 +1411,7 @@ module.exports = (function split(undef) {
   return self;
 })();
 
-},{}],16:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 'use strict';
 
 var OneVersionConstraint = require('individual/one-version');
@@ -1508,7 +1433,7 @@ function EvStore(elem) {
     return hash;
 }
 
-},{"individual/one-version":18}],17:[function(require,module,exports){
+},{"individual/one-version":15}],14:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -1531,7 +1456,7 @@ function Individual(key, value) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],18:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 var Individual = require('./index.js');
@@ -1555,7 +1480,7 @@ function OneVersion(moduleName, version, defaultValue) {
     return Individual(key, defaultValue);
 }
 
-},{"./index.js":17}],19:[function(require,module,exports){
+},{"./index.js":14}],16:[function(require,module,exports){
 (function (global){
 var topLevel = typeof global !== 'undefined' ? global :
     typeof window !== 'undefined' ? window : {}
@@ -1574,14 +1499,14 @@ if (typeof document !== 'undefined') {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"min-document":9}],20:[function(require,module,exports){
+},{"min-document":6}],17:[function(require,module,exports){
 "use strict";
 
 module.exports = function isObject(x) {
 	return typeof x === "object" && x !== null;
 };
 
-},{}],21:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 var nativeIsArray = Array.isArray
 var toString = Object.prototype.toString
 
@@ -1591,12 +1516,12 @@ function isArray(obj) {
     return toString.call(obj) === "[object Array]"
 }
 
-},{}],22:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var patch = require("./vdom/patch.js")
 
 module.exports = patch
 
-},{"./vdom/patch.js":27}],23:[function(require,module,exports){
+},{"./vdom/patch.js":24}],20:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook.js")
 
@@ -1695,7 +1620,7 @@ function getPrototype(value) {
     }
 }
 
-},{"../vnode/is-vhook.js":35,"is-object":20}],24:[function(require,module,exports){
+},{"../vnode/is-vhook.js":32,"is-object":17}],21:[function(require,module,exports){
 var document = require("global/document")
 
 var applyProperties = require("./apply-properties")
@@ -1743,7 +1668,7 @@ function createElement(vnode, opts) {
     return node
 }
 
-},{"../vnode/handle-thunk.js":33,"../vnode/is-vnode.js":36,"../vnode/is-vtext.js":37,"../vnode/is-widget.js":38,"./apply-properties":23,"global/document":19}],25:[function(require,module,exports){
+},{"../vnode/handle-thunk.js":30,"../vnode/is-vnode.js":33,"../vnode/is-vtext.js":34,"../vnode/is-widget.js":35,"./apply-properties":20,"global/document":16}],22:[function(require,module,exports){
 // Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
 // We don't want to read all of the DOM nodes in the tree so we use
 // the in-order tree indexing to eliminate recursion down certain branches.
@@ -1830,7 +1755,7 @@ function ascending(a, b) {
     return a > b ? 1 : -1
 }
 
-},{}],26:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var applyProperties = require("./apply-properties")
 
 var isWidget = require("../vnode/is-widget.js")
@@ -1983,7 +1908,7 @@ function replaceRoot(oldRoot, newRoot) {
     return newRoot;
 }
 
-},{"../vnode/is-widget.js":38,"../vnode/vpatch.js":41,"./apply-properties":23,"./update-widget":28}],27:[function(require,module,exports){
+},{"../vnode/is-widget.js":35,"../vnode/vpatch.js":38,"./apply-properties":20,"./update-widget":25}],24:[function(require,module,exports){
 var document = require("global/document")
 var isArray = require("x-is-array")
 
@@ -2065,7 +1990,7 @@ function patchIndices(patches) {
     return indices
 }
 
-},{"./create-element":24,"./dom-index":25,"./patch-op":26,"global/document":19,"x-is-array":21}],28:[function(require,module,exports){
+},{"./create-element":21,"./dom-index":22,"./patch-op":23,"global/document":16,"x-is-array":18}],25:[function(require,module,exports){
 var isWidget = require("../vnode/is-widget.js")
 
 module.exports = updateWidget
@@ -2082,7 +2007,7 @@ function updateWidget(a, b) {
     return false
 }
 
-},{"../vnode/is-widget.js":38}],29:[function(require,module,exports){
+},{"../vnode/is-widget.js":35}],26:[function(require,module,exports){
 'use strict';
 
 var EvStore = require('ev-store');
@@ -2111,7 +2036,7 @@ EvHook.prototype.unhook = function(node, propertyName) {
     es[propName] = undefined;
 };
 
-},{"ev-store":16}],30:[function(require,module,exports){
+},{"ev-store":13}],27:[function(require,module,exports){
 'use strict';
 
 module.exports = SoftSetHook;
@@ -2130,7 +2055,7 @@ SoftSetHook.prototype.hook = function (node, propertyName) {
     }
 };
 
-},{}],31:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict';
 
 var isArray = require('x-is-array');
@@ -2269,7 +2194,7 @@ function errorString(obj) {
     }
 }
 
-},{"../vnode/is-thunk":34,"../vnode/is-vhook":35,"../vnode/is-vnode":36,"../vnode/is-vtext":37,"../vnode/is-widget":38,"../vnode/vnode.js":40,"../vnode/vtext.js":42,"./hooks/ev-hook.js":29,"./hooks/soft-set-hook.js":30,"./parse-tag.js":32,"x-is-array":21}],32:[function(require,module,exports){
+},{"../vnode/is-thunk":31,"../vnode/is-vhook":32,"../vnode/is-vnode":33,"../vnode/is-vtext":34,"../vnode/is-widget":35,"../vnode/vnode.js":37,"../vnode/vtext.js":39,"./hooks/ev-hook.js":26,"./hooks/soft-set-hook.js":27,"./parse-tag.js":29,"x-is-array":18}],29:[function(require,module,exports){
 'use strict';
 
 var split = require('browser-split');
@@ -2325,7 +2250,7 @@ function parseTag(tag, props) {
     return props.namespace ? tagName : tagName.toUpperCase();
 }
 
-},{"browser-split":15}],33:[function(require,module,exports){
+},{"browser-split":12}],30:[function(require,module,exports){
 var isVNode = require("./is-vnode")
 var isVText = require("./is-vtext")
 var isWidget = require("./is-widget")
@@ -2367,14 +2292,14 @@ function renderThunk(thunk, previous) {
     return renderedThunk
 }
 
-},{"./is-thunk":34,"./is-vnode":36,"./is-vtext":37,"./is-widget":38}],34:[function(require,module,exports){
+},{"./is-thunk":31,"./is-vnode":33,"./is-vtext":34,"./is-widget":35}],31:[function(require,module,exports){
 module.exports = isThunk
 
 function isThunk(t) {
     return t && t.type === "Thunk"
 }
 
-},{}],35:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 module.exports = isHook
 
 function isHook(hook) {
@@ -2383,7 +2308,7 @@ function isHook(hook) {
        typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
 }
 
-},{}],36:[function(require,module,exports){
+},{}],33:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualNode
@@ -2392,7 +2317,7 @@ function isVirtualNode(x) {
     return x && x.type === "VirtualNode" && x.version === version
 }
 
-},{"./version":39}],37:[function(require,module,exports){
+},{"./version":36}],34:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = isVirtualText
@@ -2401,17 +2326,17 @@ function isVirtualText(x) {
     return x && x.type === "VirtualText" && x.version === version
 }
 
-},{"./version":39}],38:[function(require,module,exports){
+},{"./version":36}],35:[function(require,module,exports){
 module.exports = isWidget
 
 function isWidget(w) {
     return w && w.type === "Widget"
 }
 
-},{}],39:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 module.exports = "2"
 
-},{}],40:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 var version = require("./version")
 var isVNode = require("./is-vnode")
 var isWidget = require("./is-widget")
@@ -2485,7 +2410,7 @@ function VirtualNode(tagName, properties, children, key, namespace) {
 VirtualNode.prototype.version = version
 VirtualNode.prototype.type = "VirtualNode"
 
-},{"./is-thunk":34,"./is-vhook":35,"./is-vnode":36,"./is-widget":38,"./version":39}],41:[function(require,module,exports){
+},{"./is-thunk":31,"./is-vhook":32,"./is-vnode":33,"./is-widget":35,"./version":36}],38:[function(require,module,exports){
 var version = require("./version")
 
 VirtualPatch.NONE = 0
@@ -2509,7 +2434,7 @@ function VirtualPatch(type, vNode, patch) {
 VirtualPatch.prototype.version = version
 VirtualPatch.prototype.type = "VirtualPatch"
 
-},{"./version":39}],42:[function(require,module,exports){
+},{"./version":36}],39:[function(require,module,exports){
 var version = require("./version")
 
 module.exports = VirtualText
@@ -2521,7 +2446,7 @@ function VirtualText(text) {
 VirtualText.prototype.version = version
 VirtualText.prototype.type = "VirtualText"
 
-},{"./version":39}],43:[function(require,module,exports){
+},{"./version":36}],40:[function(require,module,exports){
 var isObject = require("is-object")
 var isHook = require("../vnode/is-vhook")
 
@@ -2581,7 +2506,7 @@ function getPrototype(value) {
   }
 }
 
-},{"../vnode/is-vhook":35,"is-object":20}],44:[function(require,module,exports){
+},{"../vnode/is-vhook":32,"is-object":17}],41:[function(require,module,exports){
 var isArray = require("x-is-array")
 
 var VPatch = require("../vnode/vpatch")
@@ -3010,5 +2935,5 @@ function appendPatch(apply, patch) {
     }
 }
 
-},{"../vnode/handle-thunk":33,"../vnode/is-thunk":34,"../vnode/is-vnode":36,"../vnode/is-vtext":37,"../vnode/is-widget":38,"../vnode/vpatch":41,"./diff-props":43,"x-is-array":21}]},{},[2])(2)
+},{"../vnode/handle-thunk":30,"../vnode/is-thunk":31,"../vnode/is-vnode":33,"../vnode/is-vtext":34,"../vnode/is-widget":35,"../vnode/vpatch":38,"./diff-props":40,"x-is-array":18}]},{},[2])(2)
 });

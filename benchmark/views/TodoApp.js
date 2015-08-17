@@ -9,22 +9,17 @@ export default function (Component, _React) {
     state = {items: [], text: ''};
 
     onChange(e) {
-      // debugger;
       this.setState({text: e.target.value});
     }
 
     handleSubmit(e) {
-      // debugger;
       e.preventDefault();
-      var nextItems = this.state.items.concat([this.state.text]);
-      var nextText = '';
+      let nextItems = this.state.items.concat([this.state.text]),
+          nextText = '';
       this.setState({items: nextItems, text: nextText});
     }
 
     render(React=_React) {
-      // console.log(this.state, new Error().stack);
-      // console.log(this.context);
-      // debugger;
       return (
         <div>
           <h3>TODO</h3>
@@ -50,7 +45,7 @@ export default function (Component, _React) {
           callback();
         }
       });
-      for (var i = 0, l = 100; i < l; i += 1) {
+      for (let i = 0, l = 100; i < l; i += 1) {
         this.setState(function (prevState) {
           return {items: prevState.items.concat([
             'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.',
@@ -59,7 +54,6 @@ export default function (Component, _React) {
           ])};
         });
       }
-      // console.log(this.state);
     }
 
     clearTest(callback) {
