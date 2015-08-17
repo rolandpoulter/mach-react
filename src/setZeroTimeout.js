@@ -3,6 +3,8 @@ let timeouts = [];
 let messageName = 'zero-timeout-message';
 
 export default function setZeroTimeout(fn) {
+  // TODO: virtual-dom uses next-tick, could import "virtual-dom/node_modules/next-tick"
+  // TODO: try setImmediate if it is defined.
   if (global.postMessage) {
     if (timeouts.indexOf(fn) === -1) timeouts.push(fn);
     global.postMessage(messageName, '*');
