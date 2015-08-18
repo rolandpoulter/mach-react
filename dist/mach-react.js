@@ -385,13 +385,14 @@ var BaseComponent = (function (_EventEmitter) {
     _get(Object.getPrototypeOf(BaseComponent.prototype), 'constructor', this).call(this);
     this.assignObject = this.constructor.assignObject;
     this.resolveDOM = this.constructor.resolveDOM;
-    this.childContext = {};
-    this.context = {};
-    this.props = {};
-    this.state = {};
     this.isUpdating = false;
+    this.props = this.assignObject({}, this.defaultProps, this.props);
+    this.state = {};
+    this.context = {};
     this.constructor.mixin && this.constructor.mixin(this.constructor);
   }
+
+  // TODO: add Component.prototype.defaultProps to make it easier to declare props defaults.
 
   _createClass(BaseComponent, [{
     key: 'cancelUpdate',
@@ -405,7 +406,7 @@ var BaseComponent = (function (_EventEmitter) {
     }
   }, {
     key: 'mergeObjectProperty',
-    value: function mergeObjectProperty(property, value, callback) {
+    value: function mergeObjectProperty(property, value) {
       this[property] = this.assignObject(this[property], value);
     }
   }, {
@@ -437,7 +438,7 @@ var BaseComponent = (function (_EventEmitter) {
     }
   }, {
     key: 'replaceObjectProperty',
-    value: function replaceObjectProperty(property, value, callback) {
+    value: function replaceObjectProperty(property, value) {
       this[property] = this.assignObject({}, value);
     }
   }, {
@@ -541,7 +542,7 @@ var ReactComponent = (function (_BaseComponent) {
   }, {
     key: 'getChildContext',
     value: function getChildContext() {
-      return this.childContext;
+      return this.childContext || {};
     }
   }, {
     key: 'getDOMNode',
@@ -922,6 +923,7 @@ function walkVirtual(definition, iterator, parent, root, parentComponent) {
 },{"./assignPolyfill":1,"./setZeroTimeout":5,"events":7,"virtual-dom":11}],5:[function(require,module,exports){
 (function (global){
 'use strict';
+
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
@@ -930,16 +932,65 @@ exports.unsetZeroTimeout = unsetZeroTimeout;
 var timeouts = [];
 var messageName = 'zero-timeout-message';
 
+// let cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame;
+// let requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
+//                             window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+
+var ids = {};
+
+// TODO: try MutationObserver
+
 function setZeroTimeout(fn) {
+  // if (requestAnimationFrame && cancelAnimationFrame) {
+  //   return ids[requestAnimationFrame.call(window, fn)] = fn;
+  // }
+  // if (global.setImmediate) return ids[global.setImmediate(fn)] = fn;
   if (global.postMessage) {
     if (timeouts.indexOf(fn) === -1) timeouts.push(fn);
-    global.postMessage(messageName, '*');
-  } else setTimeout(fn, 0);
+    return global.postMessage(messageName, '*');
+  }
+  ids[setTimeout(fn, 0)] = fn;
 }
 
 function unsetZeroTimeout(fn) {
-  var index = timeouts.indexOf(fn);
-  if (index === -1) timeouts[index] = null;
+  // if (requestAnimationFrame && cancelAnimationFrame) {
+  //   return cancelAnimationFrame.call(window, findId(fn));
+  // }
+  // if (global.clearImmediate) return global.clearImmediate(findId(fn));
+  if (global.postMessage) {
+    var index = timeouts.indexOf(fn);
+    if (index === -1) timeouts[index] = null;
+    return;
+  }
+  clearTimeout(findId(fn));
+}
+
+function findId(fn) {
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = ids[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var id = _step.value;
+      if (ids[id] === fn) return id;
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator['return']) {
+        _iterator['return']();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
+  return null;
 }
 
 if (typeof window !== 'undefined') window.addEventListener('message', handleMessage, true);
