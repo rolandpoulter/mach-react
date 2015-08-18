@@ -9,6 +9,7 @@ let messageName = 'zero-timeout-message';
 
 let ids = {};
 
+// TODO: try MutationObserver
 export default function setZeroTimeout(fn) {
   // if (requestAnimationFrame && cancelAnimationFrame) {
   //   return ids[requestAnimationFrame.call(window, fn)] = fn;
