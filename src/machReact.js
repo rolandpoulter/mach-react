@@ -1,8 +1,9 @@
 'use strict';
-import './assignPolyfill';
+import assignObject from './assignObject';
 import setZeroTimeout from './setZeroTimeout';
 import { EventEmitter } from 'events';
 import { h, diff, patch, create as createVirtualElement } from 'virtual-dom';
+import svg from 'virtual-dom/virtual-hyperscript/svg';
 
 export setZeroTimeout from './setZeroTimeout';
 export { EventEmitter } from 'events';
@@ -13,7 +14,7 @@ export function createElement(type, props, ...children) {
 
 export class BaseComponent extends EventEmitter {
   static appendDOM = attach;
-  static assignObject = Object.assign;
+  static assignObject = assignObject;
   static createElement = createElement;
   static mixin(constructor) {
     let prototype = constructor.prototype;
@@ -28,7 +29,7 @@ export class BaseComponent extends EventEmitter {
   resolveDOM = this.constructor.resolveDOM;
   constructor() {
     super();
-    this.props = this.assignObject({}, this.defaultProps, this.props);
+    this.props = this.assignObject({}, this.constructor.defaultProps, this.props);
     this.state = {};
     this.context = {};
     this.constructor.mixin && this.constructor.mixin(this.constructor);
@@ -250,6 +251,7 @@ export class OnChangeHook {
   }
 }
 
+// TODO: refs are not being declared corrent, they work on the parent component, and not the component where they were defined in render()
 export class RefHook {
   constructor(name, component) {
     this.name = name;
@@ -290,7 +292,8 @@ export function create(type, props, children, context) {
   props = fixProps(props || {});
   if (typeof type === 'string') {
     if (props.cssSelector) type += cssSelector;
-    definition = h(type, props, children);
+    // TODO: you have to make sure to add svg={true} to every svg element or else it wont work
+    definition = (props.svg ? svg : h)(type, props, children);
     definition.context = context;
   }
   else {

@@ -36,7 +36,7 @@ export function unsetZeroTimeout(fn) {
 }
 
 function findId(fn) {
-  for (let id of ids) if (ids[id] === fn) return id;
+  for (let id in ids) if (ids[id] === fn) return id;
   return null;
 }
 
