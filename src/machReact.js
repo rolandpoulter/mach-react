@@ -28,12 +28,11 @@ export class BaseComponent extends EventEmitter {
   resolveDOM = this.constructor.resolveDOM;
   constructor() {
     super();
+    this.props = this.assignObject({}, this.defaultProps, this.props);
+    this.state = {};
+    this.context = {};
     this.constructor.mixin && this.constructor.mixin(this.constructor);
   }
-  childContext = {}
-  context = {}
-  props = {}
-  state = {}
   cancelUpdate() {
     if (this.isUpdating) {
       unsetZeroTimeout(this.updateFunc);
@@ -43,7 +42,7 @@ export class BaseComponent extends EventEmitter {
     return this;
   }
   isUpdating = false;
-  mergeObjectProperty(property, value, callback) {
+  mergeObjectProperty(property, value) {
     this[property] = this.assignObject(this[property], value);
   }
   mount(parent) {
@@ -67,7 +66,7 @@ export class BaseComponent extends EventEmitter {
     this.isUpdating = true;
     setZeroTimeout(this.updateFunc);
   }
-  replaceObjectProperty(property, value, callback) {
+  replaceObjectProperty(property, value) {
     this[property] = this.assignObject({}, value);
   }
   safeRender() { return this.render(this.constructor); }
@@ -134,7 +133,7 @@ export default class ReactComponent extends BaseComponent {
   }
   forceUpdate() { this.update(true); }
   get displayName() { return this.constructor.name; }
-  getChildContext() { return this.childContext; }
+  getChildContext() { return this.childContext || {}; }
   getDOMNode() { return this.domNode; }
   isMounted() { return this.domNode && this.domNode.parentNode; }
   replaceProps(newProps, callback) {

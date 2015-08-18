@@ -25,19 +25,16 @@ export default function (Component, _React) {
     };
 
     componentWillMount() {
-      console.log(this.x, this.y)
       console.log('WILL MOUNT', this.type, this.refs);
+      if (this.isMounted) console.log(this.isMounted());
+      console.log(this.x, this.y)
     }
 
     componentDidMount() {
       console.log('DID MOUNT', this.type, this.refs);
-      if (typeof this.isMounted === 'function') {
-        if (!this.isMounted()) throw new Error('Unmounted');
-      }
+      if (this.isMounted) console.log(this.isMounted());
       setTimeout(() => {
-        this.setState({
-          message: 'Hello World!!!'
-        });
+        this.setState({message: 'Hello World!!!'});
       }, 1000);
       this.benchmark();
     }
@@ -60,10 +57,12 @@ export default function (Component, _React) {
 
     componentWillUnmount() {
       console.log('WILL UNMOUNT', this.type, this.refs);
+      if (this.isMounted) console.log(this.isMounted());
     }
 
     componentDidUnmount() {
       console.log('DID UNMOUNT', this.type, this.refs);
+      if (this.isMounted) console.log(this.isMounted());
     }
 
     shouldComponentUpdate(nextProps, nextState) {
