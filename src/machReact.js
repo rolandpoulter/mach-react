@@ -30,8 +30,12 @@ export class BaseComponent extends EventEmitter {
   constructor() {
     super();
     this.props = this.assignObject({}, this.constructor.defaultProps, this.props);
+    this.props.key = this.props.key || (Math.floor(1024 + Math.random() * 31743)).toString(32);
+    this.next = {};
+    this.last = {};
     this.state = {};
     this.context = {};
+    this.pending = {};
     this.constructor.mixin && this.constructor.mixin(this.constructor);
   }
   cancelUpdate() {
@@ -44,7 +48,15 @@ export class BaseComponent extends EventEmitter {
   }
   isUpdating = false;
   mergeObjectProperty(property, value) {
-    this[property] = this.assignObject(this[property], value);
+    // this.last[property] = this.assignObject(this.last[property] || {}, this[property]);
+    // this.assignObject(this[property], value);
+    // this.next[property] = this.assignObject(this.next[property] || {}, this[property]);
+    // this.pending[property] = Date.now();
+    let target = this[property] ? this.next : this;
+    target[property] = this.assignObject(this.next[property] || {}, this[property], value);
+    this.pending[property] = Date.now();
+    this.last[property] = this[property];
+    this[property] = target[property];
   }
   mount(parent) {
     this.refs = {};
@@ -68,7 +80,12 @@ export class BaseComponent extends EventEmitter {
     setZeroTimeout(this.updateFunc);
   }
   replaceObjectProperty(property, value) {
-    this[property] = this.assignObject({}, value);
+    // this.mergeObjectProperty(property, value);
+    let target = this[property] ? this.next : this;
+    target[property] = this.assignObject({}, value);
+    this.pending[property] = Date.now();
+    this.last[property] = this[property];
+    this[property] = target[property];
   }
   safeRender() { return this.render(this.constructor); }
   safeUpdate(force) { (force || !this.isUpdating) && this.cancelUpdate().update(force); }
@@ -78,6 +95,8 @@ export class BaseComponent extends EventEmitter {
     if (parentComponent && rootComponent !== parentComponent) {
       this.mergeObjectProperty('context', parentComponent.getChildContext());
     }
+    // this.context = this.next.context;
+    // this.next.context = null;
   }
   unmount() {
     this.componentWillUnmount && his.componentWillUnmount();
@@ -95,17 +114,26 @@ export class BaseComponent extends EventEmitter {
     }
   }
   update(force) {
+    this.assignObject(this, this.last)
     if (!force) {
-      if (this.shouldComponentUpdate && !this.shouldComponentUpdate(this.props, this.state)) return;
+      if (this.shouldComponentUpdate &&
+          !this.shouldComponentUpdate(this.next.props || this.props,
+                                      this.next.state || this.state)) return;
       this.componentWillUpdate && this.componentWillUpdate(this.props, this.state);
     }
+    this.assignObject(this, this.next);
+    this.next = {};
     this.refs = {};
     this.lastVirtualElement = this.virtualElement;
     this.virtualElement = this.safeRender();
+    // TODO: apply hooks to virtualElement here, Instead of calling them manually?
+    this.virtualElement.key = this.virtualElement.key || this.props.key;
+    console.log('virtual render', this.virtualElement);
     this.domNode = this.resolveDOM(this);
     let finishUpdate = () => {
       !force && this.componentDidUpdate && this.componentDidUpdate();
       this.emit('update');
+      this.pending = {};
       this.isUpdating = false;
       this.updateFunc = null;
     };
@@ -129,8 +157,8 @@ export default class ReactComponent extends BaseComponent {
   autoUpdateWhenPropsChange = true;
   constructor(props, context) {
     super();
-    props && (this.props = this.assignObject(this.props, props));
-    context && (this.context = this.assignObject(this.context, context));
+    props && this.mergeObjectProperty('props', props);
+    context && this.mergeObjectProperty('context', context);
   }
   forceUpdate() { this.update(true); }
   get displayName() { return this.constructor.name; }
@@ -173,11 +201,21 @@ export class ComponentThunk {
       if (previous.component.displayName !== this.component.displayName) {
         throw new Error('ComponentThunk: ' + previous.component.displayName + ': component mismatch');
       }
-      else {
-        previous.component.context = this.component.context;
-        previous.component.replaceProps(this.component.props);
-        this.component = previous.component;
-      }
+      let other = previous.component,
+          prev = previous.vnode.component,
+          next = this.component;
+      // console.log('Render', prev.displayName);
+      // console.log('===', prev === other, prev === next, next === other);
+      // console.log('pending', prev.pending, next.pending, other.pending);
+      // console.log('context', prev.context, next.context, other.context);
+      // console.log('props', prev.props, next.props, other.props);
+      // console.log('state', prev.state, next.state, other.state);
+      // console.log('refs', prev.refs, next.refs, other.refs);
+      prev.replaceObjectProperty('context', next.context);
+      prev.replaceObjectProperty('props', next.props);
+      // prev.mergeObjectProperty('state', next.state);
+      previous.vnode.update();
+      return previous.vnode;
     }
     return new ComponentWidget(this.component);
   }
@@ -193,6 +231,7 @@ export class ComponentWidget {
     if (!this.component.domNode) return;
     setZeroTimeout(componentDidMount);
     this.component.domNode.component = this.component;
+    console.log('init', this.component.props.refHook);
     if (this.component.props.refHook) {
       this.component.props.refHook.hook(this.component.domNode, 'ref');
     }
@@ -200,8 +239,10 @@ export class ComponentWidget {
   }
   update(previous, domNode) {
     this.component.safeUpdate();
+    console.log('update');
     if (this.component.domNode) {
       this.component.domNode.component = this.component;
+      console.log('update2', this.component.props.refHook);
       if (this.component.props.refHook) {
         this.component.props.refHook.hook(this.component.domNode, 'ref');
       }
@@ -366,6 +407,7 @@ export function resolve(component) {
   walkVirtual(component.virtualElement, (def, parent, root, parentComponent) => {
     if (def) {
       if (def.component) {
+        console.log('got here', def.component.props.ref);
         if (def.component.props.ref) {
           def.component.props.refHook = new RefHook(def.component.props.ref, component);
         }

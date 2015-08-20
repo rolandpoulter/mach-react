@@ -612,7 +612,22 @@ var ComponentThunk = (function () {
           throw new Error('ComponentThunk: ' + previous.component.displayName + ': component mismatch');
         } else {
           previous.component.context = this.component.context;
-          previous.component.replaceProps(this.component.props);
+          // previous.component.replaceProps(this.component.props);
+          // previous.component.context = this.component.context;
+          // console.log(previous.component.isUpdating);
+          // console.log(previous.component.state, this.component.state);
+          console.log('GOT HERE');
+          console.log(previous.component.isUpdating, this.component.isUpdating);
+          console.log(previous.component.props, this.component.props);
+          console.log(previous.component.state, this.component.state);
+          console.log(previous.component, this.component);
+          previous.component.props = this.component.props;
+          if (previous.component.props.key === this.component.props.key) {
+            previous.component.state = this.component.state;
+          }
+          // else {
+          //
+          // }
           this.component = previous.component;
         }
       }
