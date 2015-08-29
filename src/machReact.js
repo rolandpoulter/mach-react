@@ -114,7 +114,7 @@ export class BaseComponent extends EventEmitter {
     }
   }
   update(force) {
-    this.assignObject(this, this.last)
+    this.assignObject(this, this.last);
     if (!force) {
       if (this.shouldComponentUpdate &&
           !this.shouldComponentUpdate(this.next.props || this.props,
@@ -128,7 +128,7 @@ export class BaseComponent extends EventEmitter {
     this.virtualElement = this.safeRender();
     // TODO: apply hooks to virtualElement here, Instead of calling them manually?
     this.virtualElement.key = this.virtualElement.key || this.props.key;
-    console.log('virtual render', this.virtualElement);
+    // console.log('virtual render', this.virtualElement);
     this.domNode = this.resolveDOM(this);
     let finishUpdate = () => {
       !force && this.componentDidUpdate && this.componentDidUpdate();
@@ -197,28 +197,36 @@ export class ComponentThunk {
     this.component = new Component(props, context);
   }
   render(previous) {
+    debugger;
     if (previous && previous.component) {
+      let prev = previous.component,
+          next = this.component;
       if (previous.component.displayName !== this.component.displayName) {
         previous.component.unmount();
       }
-      let other = previous.component,
-          prev = previous.vnode.component,
-          next = this.component;
-      prev.replaceObjectProperty('context', next.context);
-      prev.replaceObjectProperty('props', next.props);
-      prev.mergeObjectProperty('state', next.state);
-      previous.vnode.update();
-      return previous.vnode;
+      else {
+        // let other = previous.component,
+        //     prev = previous.vnode.component,
+        //     next = this.component;
+        prev.replaceObjectProperty('context', next.context);
+        prev.replaceObjectProperty('props', next.props);
+        prev.mergeObjectProperty('state', next.state);
+        // previous.vnode.update();
+        // return previous.vnode;
+        previous.component.update();
+        return previous.component.virtualElement;
+      }
     }
     let componentDidMount = this.component.mount();
     if (!this.component.domNode) return;
     setZeroTimeout(componentDidMount);
     this.component.domNode.component = this.component;
-    console.log('init', this.component.props.refHook);
+    debugger;
+    // console.log('init', this.component.props.refHook);
     // if (this.component.props.refHook) {
     //   this.component.props.refHook.hook(this.component.domNode, 'ref');
     // }
-    return this.component.domNode;
+    return this.component.virtualElement;
   }
 }
 

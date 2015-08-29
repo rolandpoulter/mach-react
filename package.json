@@ -77,7 +77,9 @@
     "release-patch": "git checkout master && npm version patch && git push origin master --tags && npm publish",
     "release": "npm run release-patch",
     "start": "node ./benchmark/server",
-    "test": "karma ./",
+    "spec": "node ./spec/server",
+    "test": "karma start",
+    "test-ci": "karma start ./karma.ci.conf.js",
     "uglify": "gulp uglify"
   }
 }

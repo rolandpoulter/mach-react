@@ -6,5 +6,6 @@ global.chai.use(global.spies);
 global.should = global.chai.should();
 global.expect = global.chai.expect;
 
-var testsContext = require.context(".", true, /_test$/);
+/* eslint-disable quotes */
+let testsContext = require.context(".", true, /_test$/);
 testsContext.keys().forEach(testsContext);

@@ -1,4 +1,5 @@
 'use strict';
+/* eslint-disable no-var */
 
 var express = require('express'),
     webpack = require('webpack'),

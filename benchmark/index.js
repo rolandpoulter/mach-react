@@ -2,7 +2,7 @@
 import 'babel/polyfill';
 import NewReact, { Component as NewComponent } from '../src/index';
 import OldReact, { Component as OldComponent } from 'react';
-import BenchmarkFactory from '../components/Benchmark';
+import BenchmarkFactory from '../components/legacy/Benchmark';
 window.onload = function () {
   let newDiv = document.createElement('div'),
       // oldDiv = document.createElement('div'),

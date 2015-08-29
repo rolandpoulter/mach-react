@@ -1,4 +1,5 @@
 'use strict';
+/* eslint-disable no-var */
 
 var express = require('express'),
     webpack = require('webpack'),
@@ -34,6 +35,6 @@ app.use(webpackDevMiddleware(compiler, {
   // publicPath: '/'
 }));
 
-var server = app.listen(3000, function () {
-  console.log('Running at localhost 3000.');
+var server = app.listen(4000, function () {
+  console.log('Running at localhost 4000.');
 });
