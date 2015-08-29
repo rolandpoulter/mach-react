@@ -7,7 +7,22 @@ export default class Describe extends Component {
     this.run();
   }
 
-  render(React) {
-    return <div>describe{this.props.children}</div>;
+  getChildContext() {
+    return {
+      describe: this
+    };
   }
+
+  render(React) {
+    return (
+      <div>
+        Describe: A {this.props.a}
+        <div>
+          {this.props.children}
+        </div>
+      </div>
+    );
+  }
+
+  run() {}
 }
