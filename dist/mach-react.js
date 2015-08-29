@@ -2781,10 +2781,10 @@
 	    this.isUpdating = false;
 	    this.props = this.assignObject({}, this.constructor.defaultProps, this.props);
 	    this.props.key = this.props.key || Math.floor(1024 + Math.random() * 31743).toString(32);
-	    this.next = {};
-	    this.last = {};
 	    this.state = {};
 	    this.context = {};
+	    this.next = {};
+	    this.last = {};
 	    this.pending = {};
 	    this.constructor.mixin && this.constructor.mixin(this.constructor);
 	  }
@@ -2812,6 +2812,7 @@
 	      target[property] = this.assignObject(this.next[property] || {}, this[property], value);
 	      this.pending[property] = Date.now();
 	      this.last[property] = this[property];
+	      this.next[property] = target[property];
 	      this[property] = target[property];
 	    }
 	  }, {
@@ -2830,6 +2831,7 @@
 	        this.constructor.appendDOM(this.domNode, parent);
 	        return finishMount();
 	      }
+
 	      return finishMount;
 	    }
 	  }, {
@@ -2849,6 +2851,7 @@
 	      target[property] = this.assignObject({}, value);
 	      this.pending[property] = Date.now();
 	      this.last[property] = this[property];
+	      this.next[property] = target[property];
 	      this[property] = target[property];
 	    }
 	  }, {
@@ -2894,6 +2897,9 @@
 	    value: function update(force) {
 	      var _this2 = this;
 
+	      this.next.props = this.assignObject(this.props || {}, this.next.props);
+	      this.next.context = this.assignObject(this.context || {}, this.next.context);
+	      this.next.state = this.assignObject(this.state || {}, this.next.state);
 	      this.assignObject(this, this.last);
 	      if (!force) {
 	        if (this.shouldComponentUpdate && !this.shouldComponentUpdate(this.next.props || this.props, this.next.state || this.state)) return;
@@ -2907,11 +2913,9 @@
 	      var componentHook = new ComponentHook(this, this.virtualElement);
 	      this.virtualElement.hooks = this.virtualElement.hooks || {};
 	      this.virtualElement.hooks.componentHook = this.virtualElement.properties.componentHook = componentHook;
-	      // debugger;
 	      // TODO: apply hooks to virtualElement here, Instead of calling them manually?
 	      this.virtualElement.properties.key = this.virtualElement.properties.key || this.props.key;
 	      this.virtualElement.key = this.virtualElement.key || this.props.key;
-	      // console.log('virtual render', this.virtualElement);
 	      this.domNode = this.resolveDOM(this);
 	      var finishUpdate = function finishUpdate() {
 	        !force && _this2.componentDidUpdate && _this2.componentDidUpdate();
@@ -3019,50 +3023,6 @@
 	var Component = ReactComponent;
 
 	exports.Component = Component;
-	// export class ComponentThunk {
-	//   type = 'Thunk';
-	//   isComponent = true;
-	//   constructor(Component, props, children, context) {
-	//     props = props || {};
-	//     props.children = props.children ? [props.children, children] : children;
-	//     this.component = new Component(props, context);
-	//   }
-	//   render(previous) {
-	//     // debugger;
-	//     if (previous && previous.component) {
-	//       let prev = previous.component,
-	//           next = this.component;
-	//       if (previous.component.displayName !== this.component.displayName) {
-	//         previous.component.unmount();
-	//       }
-	//       else {
-	//         // let other = previous.component,
-	//         //     prev = previous.vnode.component,
-	//         //     next = this.component;
-	//         prev.replaceObjectProperty('context', next.context);
-	//         prev.replaceObjectProperty('props', next.props);
-	//         prev.mergeObjectProperty('state', next.state);
-	//         // previous.vnode.update();
-	//         // return previous.vnode;
-	//         previous.component.update();
-	//         // if (this.component.props.refHook) {
-	//         //   this.component.props.refHook.hook(this.component.domNode, 'ref');
-	//         // }
-	//         return previous.component.virtualElement;
-	//       }
-	//     }
-	//     let componentDidMount = this.component.mount();
-	//     if (!this.component.domNode) return;
-	//     setZeroTimeout(componentDidMount);
-	//     this.component.domNode.component = this.component;
-	//     // debugger;
-	//     // console.log('init', this.component.props.refHook);
-	//     // if (this.component.props.refHook) {
-	//     //   this.component.props.refHook.hook(this.component.domNode, 'ref');
-	//     // }
-	//     return this.component.virtualElement;
-	//   }
-	// }
 
 	var ComponentThunk = (function () {
 	  function ComponentThunk(Component, props, children, context) {
@@ -3086,16 +3046,9 @@
 	        var other = previous.component,
 	            prev = previous.vnode.component,
 	            next = this.component;
-	        // console.log('Render', prev.displayName);
-	        // console.log('===', prev === other, prev === next, next === other);
-	        // console.log('pending', prev.pending, next.pending, other.pending);
-	        // console.log('context', prev.context, next.context, other.context);
-	        // console.log('props', prev.props, next.props, other.props);
-	        // console.log('state', prev.state, next.state, other.state);
-	        // console.log('refs', prev.refs, next.refs, other.refs);
 	        prev.replaceObjectProperty('context', next.context);
 	        prev.replaceObjectProperty('props', next.props);
-	        // prev.mergeObjectProperty('state', next.state);
+	        prev.mergeObjectProperty('state', next.state);
 	        previous.vnode.update();
 	        return previous.vnode;
 	      }
@@ -3167,20 +3120,10 @@
 
 	  _createClass(ComponentHook, [{
 	    key: 'hook',
-	    value: function hook() {
-	      // setZeroTimeout(() => {
-	      //   if (this.component.props.refHook) {
-	      //     this.component.props.refHook.hook(this.component.domNode, 'ref');
-	      //   }
-	      // });
-
-	      // TODO:
-	    }
+	    value: function hook() {}
 	  }, {
 	    key: 'unhook',
-	    value: function unhook() {
-	      // TODO:
-	    }
+	    value: function unhook() {}
 	  }]);
 
 	  return ComponentHook;
