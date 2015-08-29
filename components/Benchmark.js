@@ -15,7 +15,7 @@ export let Point = {
 export default function (Component, _React) {
   let TodoApp = TodoAppFactory(Component, _React);
 
-  return class TestComponent extends Component {
+  return class Benchmark extends Component {
     static mixins = [ Point ]
 
     type = _React === RealReact ? 'Real' : 'Mach';

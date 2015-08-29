@@ -10,11 +10,7 @@ var compiler = webpack({
   entry: {
     app: ['./benchmark/index.js']
   },
-  module: {
-    loaders: [
-      { test: /\.jsx?/, loader: 'babel-loader', exclude: /node_modules/ }
-    ]
-  },
+  module: require('../webpack.config').module,
   output: {
     path: '/',
     filename: 'bundle.js'
