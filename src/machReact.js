@@ -199,60 +199,94 @@ export class ComponentThunk {
   render(previous) {
     if (previous && previous.component) {
       if (previous.component.displayName !== this.component.displayName) {
-        throw new Error('ComponentThunk: ' + previous.component.displayName + ': component mismatch');
+        previous.component.unmount();
       }
       let other = previous.component,
           prev = previous.vnode.component,
           next = this.component;
-      // console.log('Render', prev.displayName);
-      // console.log('===', prev === other, prev === next, next === other);
-      // console.log('pending', prev.pending, next.pending, other.pending);
-      // console.log('context', prev.context, next.context, other.context);
-      // console.log('props', prev.props, next.props, other.props);
-      // console.log('state', prev.state, next.state, other.state);
-      // console.log('refs', prev.refs, next.refs, other.refs);
       prev.replaceObjectProperty('context', next.context);
       prev.replaceObjectProperty('props', next.props);
-      // prev.mergeObjectProperty('state', next.state);
+      prev.mergeObjectProperty('state', next.state);
       previous.vnode.update();
       return previous.vnode;
     }
-    return new ComponentWidget(this.component);
-  }
-}
-
-export class ComponentWidget {
-  type = 'Widget';
-  constructor(component) {
-    this.component = component;
-  }
-  init() {
     let componentDidMount = this.component.mount();
     if (!this.component.domNode) return;
     setZeroTimeout(componentDidMount);
     this.component.domNode.component = this.component;
     console.log('init', this.component.props.refHook);
-    if (this.component.props.refHook) {
-      this.component.props.refHook.hook(this.component.domNode, 'ref');
-    }
+    // if (this.component.props.refHook) {
+    //   this.component.props.refHook.hook(this.component.domNode, 'ref');
+    // }
     return this.component.domNode;
-  }
-  update(previous, domNode) {
-    this.component.safeUpdate();
-    console.log('update');
-    if (this.component.domNode) {
-      this.component.domNode.component = this.component;
-      console.log('update2', this.component.props.refHook);
-      if (this.component.props.refHook) {
-        this.component.props.refHook.hook(this.component.domNode, 'ref');
-      }
-    }
-    return this.component.domNode;
-  }
-  destroy(domNode) {
-    this.component.unmount();
   }
 }
+
+// export class ComponentThunk {
+//   type = 'Thunk';
+//   isComponent = true;
+//   constructor(Component, props, children, context) {
+//     props = props || {};
+//     props.children = props.children ? [props.children, children] : children;
+//     this.component = new Component(props, context);
+//   }
+//   render(previous) {
+//     if (previous && previous.component) {
+//       if (previous.component.displayName !== this.component.displayName) {
+//         throw new Error('ComponentThunk: ' + previous.component.displayName + ': component mismatch');
+//       }
+//       let other = previous.component,
+//           prev = previous.vnode.component,
+//           next = this.component;
+//       // console.log('Render', prev.displayName);
+//       // console.log('===', prev === other, prev === next, next === other);
+//       // console.log('pending', prev.pending, next.pending, other.pending);
+//       // console.log('context', prev.context, next.context, other.context);
+//       // console.log('props', prev.props, next.props, other.props);
+//       // console.log('state', prev.state, next.state, other.state);
+//       // console.log('refs', prev.refs, next.refs, other.refs);
+//       prev.replaceObjectProperty('context', next.context);
+//       prev.replaceObjectProperty('props', next.props);
+//       // prev.mergeObjectProperty('state', next.state);
+//       previous.vnode.update();
+//       return previous.vnode;
+//     }
+//     return new ComponentWidget(this.component);
+//   }
+// }
+
+// export class ComponentWidget {
+//   type = 'Widget';
+//   constructor(component) {
+//     this.component = component;
+//   }
+//   init() {
+//     let componentDidMount = this.component.mount();
+//     if (!this.component.domNode) return;
+//     setZeroTimeout(componentDidMount);
+//     this.component.domNode.component = this.component;
+//     console.log('init', this.component.props.refHook);
+//     if (this.component.props.refHook) {
+//       this.component.props.refHook.hook(this.component.domNode, 'ref');
+//     }
+//     return this.component.domNode;
+//   }
+//   update(previous, domNode) {
+//     this.component.safeUpdate();
+//     console.log('update');
+//     if (this.component.domNode) {
+//       this.component.domNode.component = this.component;
+//       console.log('update2', this.component.props.refHook);
+//       if (this.component.props.refHook) {
+//         this.component.props.refHook.hook(this.component.domNode, 'ref');
+//       }
+//     }
+//     return this.component.domNode;
+//   }
+//   destroy(domNode) {
+//     this.component.unmount();
+//   }
+// }
 
 export class HtmlHook {
   constructor(value) { this.value = value; }
