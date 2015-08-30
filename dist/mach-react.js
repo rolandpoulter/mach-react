@@ -2911,14 +2911,9 @@
 	      if (!force && this.shouldComponentUpdate && !this.shouldComponentUpdate(temp.props, temp.state)) return;
 	      this.assignObject(this, temp);
 	      !force && this.componentWillUpdate && this.componentWillUpdate(this.props, this.state);
-	      // this.refs = {};
+	      this.refs = {};
 	      this.lastVirtualElement = this.virtualElement;
 	      this.virtualElement = this.safeRender();
-	      // let componentHook = new ComponentHook(this, this.virtualElement);
-	      // this.virtualElement.hooks = this.virtualElement.hooks || {};
-	      // this.virtualElement.hooks.componentHook =
-	      // this.virtualElement.properties.componentHook = componentHook;
-	      // TODO: apply hooks to virtualElement here, Instead of calling them manually?
 	      this.virtualElement.properties.key = this.virtualElement.properties.key || this.props.key;
 	      this.virtualElement.key = this.virtualElement.key || this.props.key;
 	      this.domNode = this.resolveDOM(this);
@@ -3050,6 +3045,7 @@
 	        prev.assignObject(prev.context, next.context);
 	        prev.replaceProps(next.props);
 	        if (next.isVolatile) prev.setState(next.state);
+	        previous.vnode.refHook();
 	        return previous.vnode;
 	      }
 	      return new ComponentWidget(this.component);
@@ -3072,19 +3068,6 @@
 	    this.id = this.component.props.key;
 	  }
 
-	  // export class ComponentHook {
-	  //   constructor(component) {
-	  //     this.component = component;
-	  //   }
-	  //   hook(domNode, propName, previousValue) {
-	  //     debugger;
-	  //     if (this.component.props.ref) {
-	  //       this.name = this.component.props.ref;
-	  //       RefHook.prototype.hook.call(this, domNode, propName, previousValue);
-	  //     }
-	  //   }
-	  // }
-
 	  _createClass(ComponentWidget, [{
 	    key: 'init',
 	    value: function init() {
@@ -3098,7 +3081,6 @@
 	  }, {
 	    key: 'update',
 	    value: function update(previous, domNode) {
-	      // this.component.safeUpdate();
 	      this.component.update();
 	      if (this.component.domNode) {
 	        this.component.domNode.component = this.component;
@@ -3320,7 +3302,8 @@
 	}
 
 	function resolve(component) {
-	  // TODO: refs are not being declared correctly, they work on the parent component, and not the component where they were defined in render()
+	  // TODO: refs are not being declared correctly, they work on the parent component,
+	  //       and not the component where they were defined in render()
 	  walkVirtual(component.virtualElement, function (def, parent, root, parentComponent) {
 	    if (def) {
 	      if (def.component) {
@@ -3340,10 +3323,10 @@
 	    domNode.component = component;
 	    domNode = (0, _virtualDom.patch)(domNode, _changes);
 	    if (domNode) domNode.component = component;
-	    // if (component.domNode !== domNode && component.domNode.parentNode && !domNode.parentNode) {
-	    //   console.warn(new Error(component.displayName + ': will replace domNode.').stack);
-	    //   component.domNode.parentNode.replaceNode(domNode, component.domNode);
-	    // }
+	    if (component.domNode !== domNode && component.domNode.parentNode && !domNode.parentNode) {
+	      console.warn(new Error(component.displayName + ': will replace domNode.').stack);
+	      component.domNode.parentNode.replaceNode(domNode, component.domNode);
+	    }
 	  }
 	  if (lastDomNode && lastDomNode !== domNode) {
 	    if (lastDomNode.component && lastDomNode.component.domNode === lastDomNode) {
@@ -3363,6 +3346,7 @@
 	  if (Array.isArray(definition)) children = definition;else if (definition.isComponent) {
 	    parentComponent = definition;
 	    children = definition.component.props.children;
+	    // TODO: getting children from props here might be dangerous
 	    // console.log(children, definition.component.next.props);
 	  } else children = definition.children;
 	  if (Array.isArray(children)) {
