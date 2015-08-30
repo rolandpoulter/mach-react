@@ -130,14 +130,10 @@ export class BaseComponent extends EventEmitter {
         !this.shouldComponentUpdate(temp.props, temp.state)) return;
     this.assignObject(this, temp);
     !force && this.componentWillUpdate && this.componentWillUpdate(this.props, this.state);
+    // TODO: fix refs on update
     // this.refs = {};
     this.lastVirtualElement = this.virtualElement;
     this.virtualElement = this.safeRender();
-    // let componentHook = new ComponentHook(this, this.virtualElement);
-    // this.virtualElement.hooks = this.virtualElement.hooks || {};
-    // this.virtualElement.hooks.componentHook =
-    // this.virtualElement.properties.componentHook = componentHook;
-    // TODO: apply hooks to virtualElement here, Instead of calling them manually?
     this.virtualElement.properties.key = this.virtualElement.properties.key || this.props.key;
     this.virtualElement.key = this.virtualElement.key || this.props.key;
     this.domNode = this.resolveDOM(this);
@@ -235,7 +231,6 @@ export class ComponentWidget {
     return this.component.domNode;
   }
   update(previous, domNode) {
-    // this.component.safeUpdate();
     this.component.update();
     if (this.component.domNode) {
       this.component.domNode.component = this.component;
@@ -254,19 +249,6 @@ export class ComponentWidget {
     }
   }
 }
-
-// export class ComponentHook {
-//   constructor(component) {
-//     this.component = component;
-//   }
-//   hook(domNode, propName, previousValue) {
-//     debugger;
-//     if (this.component.props.ref) {
-//       this.name = this.component.props.ref;
-//       RefHook.prototype.hook.call(this, domNode, propName, previousValue);
-//     }
-//   }
-// }
 
 export class RefHook {
   constructor(name, component) {
@@ -417,7 +399,8 @@ export function render(virtualElement, parentDomNode, callback, delay) {
 }
 
 export function resolve(component) {
-  // TODO: refs are not being declared correctly, they work on the parent component, and not the component where they were defined in render()
+  // TODO: refs are not being declared correctly, they work on the parent component,
+  //       and not the component where they were defined in render()
   walkVirtual(component.virtualElement, (def, parent, root, parentComponent) => {
     if (def) {
       if (def.component) {
@@ -439,10 +422,10 @@ export function resolve(component) {
     domNode.component = component;
     domNode = patch(domNode, changes);
     if (domNode) domNode.component = component;
-    // if (component.domNode !== domNode && component.domNode.parentNode && !domNode.parentNode) {
-    //   console.warn(new Error(component.displayName + ': will replace domNode.').stack);
-    //   component.domNode.parentNode.replaceNode(domNode, component.domNode);
-    // }
+    if (component.domNode !== domNode && component.domNode.parentNode && !domNode.parentNode) {
+      console.warn(new Error(component.displayName + ': will replace domNode.').stack);
+      component.domNode.parentNode.replaceNode(domNode, component.domNode);
+    }
   }
   if (lastDomNode && lastDomNode !== domNode) {
     if (lastDomNode.component && lastDomNode.component.domNode === lastDomNode) {
@@ -463,6 +446,7 @@ export function walkVirtual(definition, iterator, parent, root, parentComponent)
   else if (definition.isComponent) {
     parentComponent = definition;
     children = definition.component.props.children;
+    // TODO: getting children from props here might be dangerous
     // console.log(children, definition.component.next.props);
   }
   else children = definition.children;
