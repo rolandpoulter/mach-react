@@ -33,9 +33,9 @@ export default function (Component, _React) {
     componentDidMount() {
       console.log('DID MOUNT', this.type, this.refs);
       if (this.isMounted) console.log(this.isMounted());
-      setTimeout(() => {
-        this.setState({message: 'Hello World!!!'});
-      }, 1000);
+      // setTimeout(() => {
+      //   this.setState({message: 'Hello World!!!'});
+      // }, 1000);
       this.benchmark();
     }
 
@@ -75,7 +75,7 @@ export default function (Component, _React) {
     };
 
     render(React=_React) {
-      let times = this.state.times.map(t => t - 32 * 1);
+      let times = this.state.times;//.map(t => t - 8 * 3);
       return (
         <div>
           <p>{times.length}</p>
@@ -98,17 +98,36 @@ export default function (Component, _React) {
     start = window.performance.now();
 
     benchmark() {
+      // debugger;
       this.perfStart();
+      // console.log('load');
       this.refs.todo.stressTest(() => {
-        setTimeout(() => {
-          this.refs.todo.clearTest(() => {
-            this.perfEnd();
-            let diff = window.performance.now() - this.start;
-            if (diff <= 5000) {
-              setTimeout(this.benchmark.bind(this), 32 * 1);
-            }
-          });
-        }, 32 * 1);
+        // debugger;
+        // let check = () => {
+        //   console.log('check');
+        //   let ul = document.body.querySelector('ul');
+        //   if (ul && ul.childNodes.length) {
+        //     setTimeout(() => {
+        //       console.log('unload');
+        //       this.refs.todo.clearTest(() => {
+        //         console.log('got here');
+        //         this.perfEnd();
+        //         let finish = () => {
+        //           console.log('finish');
+        //           let ul = document.body.querySelector('ul');
+        //           if (ul && !ul.childNodes.length) {
+        //             let diff = window.performance.now() - this.start;
+        //             if (diff <= 5000) setTimeout(this.benchmark.bind(this), 0);
+        //           }
+        //           else setTimeout(finish, 0);
+        //         };
+        //         finish();
+        //       });
+        //     }, 0);
+        //   }
+        //   else setTimeout(check, 0);
+        // };
+        // check();
       });
     }
 

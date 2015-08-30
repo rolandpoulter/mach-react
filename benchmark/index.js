@@ -14,9 +14,9 @@ window.onload = function () {
   // let OldBenchmark = BenchmarkFactory(OldComponent, OldReact);
   // OldReact.render(<OldBenchmark>OLD</OldBenchmark>, oldDiv, () => console.log('OLD LOADED'));
   // setTimeout(() => {
-  console.log('NEW');
-  React = NewReact;
-  let NewBenchmark = BenchmarkFactory(NewComponent, NewReact);
-  NewReact.render(<NewBenchmark>NEW</NewBenchmark>, newDiv, () => console.log('NEW LOADED'));
+    console.log('NEW');
+    React = NewReact;
+    let NewBenchmark = BenchmarkFactory(NewComponent, NewReact);
+    NewReact.render(<NewBenchmark>NEW</NewBenchmark>, newDiv, () => console.log('NEW LOADED'));
   // }, 6000);
 }

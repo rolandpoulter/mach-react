@@ -35,6 +35,6 @@ app.use(webpackDevMiddleware(compiler, {
   // publicPath: '/'
 }));
 
-var server = app.listen(3000, function () {
+var server = app.listen(3003, function () {
   console.log('Running at localhost 3000.');
 });
