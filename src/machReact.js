@@ -130,8 +130,7 @@ export class BaseComponent extends EventEmitter {
         !this.shouldComponentUpdate(temp.props, temp.state)) return;
     this.assignObject(this, temp);
     !force && this.componentWillUpdate && this.componentWillUpdate(this.props, this.state);
-    // TODO: fix refs on update
-    // this.refs = {};
+    this.refs = {};
     this.lastVirtualElement = this.virtualElement;
     this.virtualElement = this.safeRender();
     this.virtualElement.properties.key = this.virtualElement.properties.key || this.props.key;
@@ -209,6 +208,7 @@ export class ComponentThunk {
       prev.assignObject(prev.context, next.context);
       prev.replaceProps(next.props);
       if (next.isVolatile) prev.setState(next.state);
+      previous.vnode.refHook();
       return previous.vnode;
     }
     return new ComponentWidget(this.component);
