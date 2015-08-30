@@ -1,9 +1,10 @@
 'use strict';
 
-var webpack = require('webpack');
-
 module.exports = function(config) {
   config.set({
+    autoWatch: true,
+
+    singleRun: false,
 
     files: ['test/index.js'],
 
@@ -13,7 +14,11 @@ module.exports = function(config) {
       'test/index.js': ['webpack']
     },
 
-    reporters: ['html'],
+    client: {
+      mocha: {
+        reporter: 'html'
+      }
+    },
 
     webpack: {
       module: require('./webpack.config').module,
@@ -26,7 +31,7 @@ module.exports = function(config) {
       }
     },
 
-    webpackMiddleware: {
+    webpackServer: {
       noInfo: true
     },
 

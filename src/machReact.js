@@ -48,10 +48,6 @@ export class BaseComponent extends EventEmitter {
   }
   isUpdating = false;
   mergeObjectProperty(property, value) {
-    // this.last[property] = this.assignObject(this.last[property] || {}, this[property]);
-    // this.assignObject(this[property], value);
-    // this.next[property] = this.assignObject(this.next[property] || {}, this[property]);
-    // this.pending[property] = Date.now();
     let target = this[property] ? this.next : this;
     target[property] = this.assignObject(this.next[property] || {}, this[property], value);
     this.pending[property] = Date.now();
@@ -82,7 +78,6 @@ export class BaseComponent extends EventEmitter {
     setZeroTimeout(this.updateFunc);
   }
   replaceObjectProperty(property, value) {
-    // this.mergeObjectProperty(property, value);
     let target = this[property] ? this.next : this;
     target[property] = this.assignObject({}, value);
     this.pending[property] = Date.now();
@@ -98,8 +93,6 @@ export class BaseComponent extends EventEmitter {
     if (parentComponent && rootComponent !== parentComponent) {
       this.mergeObjectProperty('context', parentComponent.getChildContext());
     }
-    // this.context = this.next.context;
-    // this.next.context = null;
   }
   unmount() {
     this.componentWillUnmount && his.componentWillUnmount();
@@ -117,6 +110,7 @@ export class BaseComponent extends EventEmitter {
     }
   }
   update(force) {
+    this.isUpdating = true;
     this.next.props = this.assignObject(this.props || {},  this.next.props);
     this.next.context = this.assignObject(this.context || {}, this.next.context);
     this.next.state = this.assignObject(this.state || {}, this.next.state);
@@ -151,7 +145,6 @@ export class BaseComponent extends EventEmitter {
   }
 }
 
-// TODO: add Component.prototype.defaultProps to make it easier to declare props defaults.
 export default class ReactComponent extends BaseComponent {
   static Component = ReactComponent;
   // componentDidMount() {}
@@ -216,7 +209,10 @@ export class ComponentThunk {
           next = this.component;
       prev.replaceObjectProperty('context', next.context);
       prev.replaceObjectProperty('props', next.props);
-      prev.mergeObjectProperty('state', next.state);
+      // debugger;
+      if (next.next.state) {
+        prev.mergeObjectProperty('state', next.state);
+      }
       previous.vnode.update();
       return previous.vnode;
     }
@@ -236,7 +232,6 @@ export class ComponentWidget {
     if (!this.component.domNode) return;
     setZeroTimeout(componentDidMount);
     this.component.domNode.component = this.component;
-    console.log('init', this.component.props.refHook);
     if (this.component.props.refHook) {
       this.component.props.refHook.hook(this.component.domNode, 'ref');
     }
@@ -244,10 +239,8 @@ export class ComponentWidget {
   }
   update(previous, domNode) {
     this.component.safeUpdate();
-    console.log('update');
     if (this.component.domNode) {
       this.component.domNode.component = this.component;
-      console.log('update2', this.component.props.refHook);
       if (this.component.props.refHook) {
         this.component.props.refHook.hook(this.component.domNode, 'ref');
       }
@@ -303,7 +296,6 @@ export class OnChangeHook {
   }
 }
 
-// TODO: refs are not being declared correctly, they work on the parent component, and not the component where they were defined in render()
 export class RefHook {
   constructor(name, component) {
     this.name = name;
@@ -415,6 +407,7 @@ export function render(virtualElement, parentDomNode, callback, delay) {
 }
 
 export function resolve(component) {
+  // TODO: refs are not being declared correctly, they work on the parent component, and not the component where they were defined in render()
   walkVirtual(component.virtualElement, (def, parent, root, parentComponent) => {
     if (def) {
       if (def.component) {

@@ -18,7 +18,7 @@ export default function (Component, _React) {
   return class Benchmark extends Component {
     static mixins = [ Point ]
 
-    type = _React === RealReact ? 'Real' : 'Mach';
+    type = ((_React === RealReact) ? 'Real' : 'Mach');
     state = {
       times: [],
       message: 'Hello World'
@@ -75,7 +75,7 @@ export default function (Component, _React) {
     };
 
     render(React=_React) {
-      let times = this.state.times.map(t => t - 32);
+      let times = this.state.times.map(t => t - 32 * 1);
       return (
         <div>
           <p>{times.length}</p>
@@ -105,10 +105,10 @@ export default function (Component, _React) {
             this.perfEnd();
             let diff = window.performance.now() - this.start;
             if (diff <= 5000) {
-              setTimeout(this.benchmark.bind(this), 32);
+              setTimeout(this.benchmark.bind(this), 32 * 1);
             }
           });
-        }, 32);
+        }, 32 * 1);
       });
     }
 
