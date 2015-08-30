@@ -2784,8 +2784,6 @@
 	    this.state = {};
 	    this.context = {};
 	    this.next = {};
-	    // this.last = {};
-	    // this.pending = {};
 	    this.constructor.mixin && this.constructor.mixin(this.constructor);
 	  }
 
@@ -2799,28 +2797,34 @@
 	      return this;
 	    }
 	  }, {
+	    key: 'markVolatile',
+	    value: function markVolatile() {
+	      var _this = this;
+
+	      if (!this.isVolatile) {
+	        this.isVolatile = true;
+	        this.once('update', function () {
+	          _this.isVolatile = false;
+	        });
+	      }
+	    }
+	  }, {
 	    key: 'mergeObjectProperty',
 	    value: function mergeObjectProperty(property, value) {
 	      var changes = this.next[property] = this.next[property] || [];
 	      changes.push(value);
-	      // let target = this[property] ? this.next : this;
-	      // target[property] = this.assignObject(this.next[property] || {}, this[property], value);
-	      // this.pending[property] = Date.now();
-	      // this.last[property] = this[property];
-	      // this.next[property] = target[property];
-	      // this[property] = target[property];
 	    }
 	  }, {
 	    key: 'mount',
 	    value: function mount(parent) {
-	      var _this = this;
+	      var _this2 = this;
 
 	      this.refs = {};
 	      this.componentWillMount && this.componentWillMount();
 	      this.update(true);
 	      var finishMount = function finishMount() {
-	        _this.componentDidMount && _this.componentDidMount();
-	        _this.emit('mount');
+	        _this2.componentDidMount && _this2.componentDidMount();
+	        _this2.emit('mount');
 	      };
 	      if (parent) {
 	        this.constructor.appendDOM(this.domNode, parent);
@@ -2829,27 +2833,11 @@
 	      return finishMount;
 	    }
 	  }, {
-	    key: 'queueUpdate',
-	    value: function queueUpdate(callback) {
-	      // debugger;
-	      if (callback) this.once('update', callback);
-	      if (this.boundUpdate) return;
-	      this.boundUpdate = this.update.bind(this);
-	      // this.isQueued = true;
-	      (0, _setZeroTimeout3['default'])(this.boundUpdate);
-	    }
-	  }, {
 	    key: 'replaceObjectProperty',
 	    value: function replaceObjectProperty(property, value) {
 	      var changes = this.next[property] = this.next[property] || [];
 	      changes.push(null);
 	      changes.push(value);
-	      // let target = this[property] ? this.next : this;
-	      // target[property] = this.assignObject({}, value);
-	      // this.pending[property] = Date.now();
-	      // this.last[property] = this[property];
-	      // this.next[property] = target[property];
-	      // this[property] = target[property];
 	    }
 	  }, {
 	    key: 'safeRender',
@@ -2870,11 +2858,6 @@
 	      if (parentComponent && parentComponent !== rootComponent) {
 	        this.assignObject(this.context, parentComponent.getChildContext());
 	      }
-	      // this.mergeObjectProperty('context', rootComponent.context);
-	      // this.mergeObjectProperty('context', rootComponent.getChildContext());
-	      // if (parentComponent && rootComponent !== parentComponent) {
-	      //   this.mergeObjectProperty('context', parentComponent.getChildContext());
-	      // }
 	    }
 	  }, {
 	    key: 'unmount',
@@ -2894,9 +2877,17 @@
 	      }
 	    }
 	  }, {
+	    key: 'queueUpdate',
+	    value: function queueUpdate(callback) {
+	      if (callback) this.once('update', callback);
+	      if (this.boundUpdate) return;
+	      this.boundUpdate = this.update.bind(this);
+	      (0, _setZeroTimeout3['default'])(this.boundUpdate);
+	    }
+	  }, {
 	    key: 'update',
 	    value: function update(force) {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      this.boundUpdate = null;
 	      this.isUpdating = true;
@@ -2912,27 +2903,14 @@
 	        }
 	        changes.forEach(function (change) {
 	          if (property === 'state' && typeof change === 'function') {
-	            change = change.call(_this2, temp.state, temp.props);
+	            change = change.call(_this3, temp.state, temp.props);
 	          }
-	          _this2.assignObject(temp[property], change);
+	          _this3.assignObject(temp[property], change);
 	        });
 	      });
-	      // if (this.displayName === 'TodoApp') debugger;
 	      if (!force && this.shouldComponentUpdate && !this.shouldComponentUpdate(temp.props, temp.state)) return;
 	      this.assignObject(this, temp);
 	      !force && this.componentWillUpdate && this.componentWillUpdate(this.props, this.state);
-	      // this.next.props = this.assignObject(this.props || {},  this.next.props);
-	      // this.next.context = this.assignObject(this.context || {}, this.next.context);
-	      // this.next.state = this.assignObject(this.state || {}, this.next.state);
-	      // this.assignObject(this, this.last);
-	      // if (!force) {
-	      //   if (this.shouldComponentUpdate &&
-	      //       !this.shouldComponentUpdate(this.next.props || this.props,
-	      //                                   this.next.state || this.state)) return;
-	      //   this.componentWillUpdate && this.componentWillUpdate(this.props, this.state);
-	      // }
-	      // this.assignObject(this, this.next);
-	      // this.next = {};
 	      // this.refs = {};
 	      this.lastVirtualElement = this.virtualElement;
 	      this.virtualElement = this.safeRender();
@@ -2945,10 +2923,9 @@
 	      this.virtualElement.key = this.virtualElement.key || this.props.key;
 	      this.domNode = this.resolveDOM(this);
 	      var finishUpdate = function finishUpdate() {
-	        !force && _this2.componentDidUpdate && _this2.componentDidUpdate();
-	        _this2.emit('update');
-	        // this.pending = {};
-	        _this2.isUpdating = false;
+	        !force && _this3.componentDidUpdate && _this3.componentDidUpdate();
+	        _this3.emit('update');
+	        _this3.isUpdating = false;
 	      };
 	      (0, _setZeroTimeout3['default'])(finishUpdate);
 	    }
@@ -3017,14 +2994,7 @@
 	  }, {
 	    key: 'replaceState',
 	    value: function replaceState(newState, callback) {
-	      var _this3 = this;
-
-	      if (!this.isVolatile) {
-	        this.isVolatile = true;
-	        this.once('update', function () {
-	          _this3.isVolatile = false;
-	        });
-	      }
+	      this.markVolatile();
 	      this.replaceObjectProperty('state', newState);
 	      this.queueUpdate(callback);
 	    }
@@ -3038,15 +3008,7 @@
 	  }, {
 	    key: 'setState',
 	    value: function setState(nextState, callback) {
-	      var _this4 = this;
-
-	      if (!this.isVolatile) {
-	        this.isVolatile = true;
-	        this.once('update', function () {
-	          _this4.isVolatile = false;
-	        });
-	      }
-	      // if (typeof nextState === 'function') nextState = nextState(this.state, this.props);
+	      this.markVolatile();
 	      this.componentWillReceiveState && this.componentWillReceiveState(nextState);
 	      this.mergeObjectProperty('state', nextState);
 	      this.queueUpdate(callback);
@@ -3082,30 +3044,12 @@
 	    key: 'render',
 	    value: function render(previous) {
 	      if (previous && previous.component) {
-	        var // other = previous.component,
-	        prev = previous.vnode.component,
+	        var prev = previous.vnode.component,
 	            next = this.component;
 	        if (prev && prev.key !== next.key) return new ComponentWidget(next);
-	        // console.log(other === prev);
 	        prev.assignObject(prev.context, next.context);
-	        // prev.replaceObjectProperty('context', next.context);
-	        // prev.replaceObjectProperty('props', next.props);
-	        // debugger;
-	        // if (other !== prev || next.next.state) {
-	        //   prev.mergeObjectProperty('state', next.state);
-	        // }
-	        // if ((/GSWorld|GSElements|Canvas/).test(prev.displayName)) debugger;
-	        // prev.replaceObjectProperty('props', next.props);
-	        // if (other !== prev || next.next.state) {
-	        //   prev.mergeObjectProperty('state', next.state);
-	        // }
 	        prev.replaceProps(next.props);
-	        console.log(prev.state, next.state);
-	        debugger;
-	        if (next.isVolatile) {
-	          prev.setState(next.state);
-	        }
-	        // previous.vnode.update();
+	        if (next.isVolatile) prev.setState(next.state);
 	        return previous.vnode;
 	      }
 	      return new ComponentWidget(this.component);
@@ -3148,12 +3092,7 @@
 	      if (!this.component.domNode) return;
 	      (0, _setZeroTimeout3['default'])(componentDidMount);
 	      this.component.domNode.component = this.component;
-	      if (this.component.props.ref) {
-	        RefHook.prototype.hook.call({ component: this.component.rootComponent, name: this.component.props.ref }, this.component.domNode);
-	      }
-	      // if (this.component.props.refHook) {
-	      //   this.component.props.refHook.hook(this.component.domNode, 'ref');
-	      // }
+	      this.refHook();
 	      return this.component.domNode;
 	    }
 	  }, {
@@ -3163,12 +3102,7 @@
 	      this.component.update();
 	      if (this.component.domNode) {
 	        this.component.domNode.component = this.component;
-	        if (this.component.props.ref) {
-	          RefHook.prototype.hook.call({ component: this.component, name: this.component.props.ref }, this.component.domNode);
-	        }
-	        // if (this.component.props.refHook) {
-	        //   this.component.props.refHook.hook(this.component.domNode, 'ref');
-	        // }
+	        this.refHook();
 	      }
 	      return this.component.domNode;
 	    }
@@ -3176,6 +3110,13 @@
 	    key: 'destroy',
 	    value: function destroy(domNode) {
 	      this.component.unmount();
+	    }
+	  }, {
+	    key: 'refHook',
+	    value: function refHook() {
+	      if (this.component.props.ref) {
+	        RefHook.prototype.hook.call({ component: this.component.rootComponent, name: this.component.props.ref }, this.component.domNode);
+	      }
 	    }
 	  }]);
 
@@ -3188,7 +3129,6 @@
 	  function RefHook(name, component) {
 	    _classCallCheck(this, RefHook);
 
-	    // debugger;
 	    this.name = name;
 	    this.component = component;
 	  }
@@ -3196,8 +3136,6 @@
 	  _createClass(RefHook, [{
 	    key: 'hook',
 	    value: function hook(domNode, propName, previousValue) {
-	      // debugger;
-	      // console.log('ref hook', this.name, this.component, domNode.component, domNode, new Error().stack);
 	      var refs = this.component.refs;
 	      if (this.name.charAt(0) === '$') {
 	        refs[this.name] = refs[this.name] || [];
@@ -3383,15 +3321,9 @@
 
 	function resolve(component) {
 	  // TODO: refs are not being declared correctly, they work on the parent component, and not the component where they were defined in render()
-	  // debugger;
 	  walkVirtual(component.virtualElement, function (def, parent, root, parentComponent) {
 	    if (def) {
 	      if (def.component) {
-	        // console.log('got here', def.component.props.ref);
-	        // if (def.component.props.ref) {
-	        //   debugger;
-	        //   def.component.props.refHook = new RefHook(def.component.props.ref, component);
-	        // }
 	        def.component.setupContext(parentComponent, component);
 	      } else if (def.props && def.props.ref) {
 	        def.props.refHook = new RefHook(def.props.ref, component);
@@ -3431,7 +3363,7 @@
 	  if (Array.isArray(definition)) children = definition;else if (definition.isComponent) {
 	    parentComponent = definition;
 	    children = definition.component.props.children;
-	    console.log(children, definition.component.next.props);
+	    // console.log(children, definition.component.next.props);
 	  } else children = definition.children;
 	  if (Array.isArray(children)) {
 	    children.forEach(function (child) {

@@ -34,8 +34,6 @@ export class BaseComponent extends EventEmitter {
     this.state = {};
     this.context = {};
     this.next = {};
-    // this.last = {};
-    // this.pending = {};
     this.constructor.mixin && this.constructor.mixin(this.constructor);
   }
   cancelUpdate() {
@@ -46,15 +44,15 @@ export class BaseComponent extends EventEmitter {
     return this;
   }
   isUpdating = false;
+  markVolatile() {
+    if (!this.isVolatile) {
+      this.isVolatile = true;
+      this.once('update', () => {this.isVolatile = false});
+    }
+  }
   mergeObjectProperty(property, value) {
     let changes = this.next[property] = this.next[property] || [];
     changes.push(value);
-    // let target = this[property] ? this.next : this;
-    // target[property] = this.assignObject(this.next[property] || {}, this[property], value);
-    // this.pending[property] = Date.now();
-    // this.last[property] = this[property];
-    // this.next[property] = target[property];
-    // this[property] = target[property];
   }
   mount(parent) {
     this.refs = {};
@@ -70,24 +68,10 @@ export class BaseComponent extends EventEmitter {
     }
     return finishMount;
   }
-  queueUpdate(callback) {
-    // debugger;
-    if (callback) this.once('update', callback);
-    if (this.boundUpdate) return;
-    this.boundUpdate = this.update.bind(this);
-    // this.isQueued = true;
-    setZeroTimeout(this.boundUpdate);
-  }
   replaceObjectProperty(property, value) {
     let changes = this.next[property] = this.next[property] || [];
     changes.push(null);
     changes.push(value);
-    // let target = this[property] ? this.next : this;
-    // target[property] = this.assignObject({}, value);
-    // this.pending[property] = Date.now();
-    // this.last[property] = this[property];
-    // this.next[property] = target[property];
-    // this[property] = target[property];
   }
   safeRender() { return this.render(this.constructor); }
   safeUpdate(force) { (force || this.boundUpdate) && this.cancelUpdate().update(force); }
@@ -100,11 +84,6 @@ export class BaseComponent extends EventEmitter {
     if (parentComponent && parentComponent !== rootComponent) {
       this.assignObject(this.context, parentComponent.getChildContext());
     }
-    // this.mergeObjectProperty('context', rootComponent.context);
-    // this.mergeObjectProperty('context', rootComponent.getChildContext());
-    // if (parentComponent && rootComponent !== parentComponent) {
-    //   this.mergeObjectProperty('context', parentComponent.getChildContext());
-    // }
   }
   unmount() {
     this.componentWillUnmount && his.componentWillUnmount();
@@ -120,6 +99,12 @@ export class BaseComponent extends EventEmitter {
       this.domNode.component = null;
       this.domNode = null;
     }
+  }
+  queueUpdate(callback) {
+    if (callback) this.once('update', callback);
+    if (this.boundUpdate) return;
+    this.boundUpdate = this.update.bind(this);
+    setZeroTimeout(this.boundUpdate);
   }
   update(force) {
     this.boundUpdate = null;
@@ -141,23 +126,10 @@ export class BaseComponent extends EventEmitter {
         this.assignObject(temp[property], change);
       });
     });
-    // if (this.displayName === 'TodoApp') debugger;
     if (!force && this.shouldComponentUpdate &&
         !this.shouldComponentUpdate(temp.props, temp.state)) return;
     this.assignObject(this, temp);
     !force && this.componentWillUpdate && this.componentWillUpdate(this.props, this.state);
-    // this.next.props = this.assignObject(this.props || {},  this.next.props);
-    // this.next.context = this.assignObject(this.context || {}, this.next.context);
-    // this.next.state = this.assignObject(this.state || {}, this.next.state);
-    // this.assignObject(this, this.last);
-    // if (!force) {
-    //   if (this.shouldComponentUpdate &&
-    //       !this.shouldComponentUpdate(this.next.props || this.props,
-    //                                   this.next.state || this.state)) return;
-    //   this.componentWillUpdate && this.componentWillUpdate(this.props, this.state);
-    // }
-    // this.assignObject(this, this.next);
-    // this.next = {};
     // this.refs = {};
     this.lastVirtualElement = this.virtualElement;
     this.virtualElement = this.safeRender();
@@ -172,7 +144,6 @@ export class BaseComponent extends EventEmitter {
     let finishUpdate = () => {
       !force && this.componentDidUpdate && this.componentDidUpdate();
       this.emit('update');
-      // this.pending = {};
       this.isUpdating = false;
     };
     setZeroTimeout(finishUpdate);
@@ -207,10 +178,7 @@ export default class ReactComponent extends BaseComponent {
     this.autoUpdateWhenPropsChange && this.queueUpdate(callback);
   }
   replaceState(newState, callback) {
-    if (!this.isVolatile) {
-      this.isVolatile = true;
-      this.once('update', () => {this.isVolatile = false});
-    }
+    this.markVolatile();
     this.replaceObjectProperty('state', newState);
     this.queueUpdate(callback);
   }
@@ -220,11 +188,7 @@ export default class ReactComponent extends BaseComponent {
     this.autoUpdateWhenPropsChange && this.queueUpdate(callback);
   }
   setState(nextState, callback) {
-    if (!this.isVolatile) {
-      this.isVolatile = true;
-      this.once('update', () => {this.isVolatile = false});
-    }
-    // if (typeof nextState === 'function') nextState = nextState(this.state, this.props);
+    this.markVolatile();
     this.componentWillReceiveState && this.componentWillReceiveState(nextState);
     this.mergeObjectProperty('state', nextState);
     this.queueUpdate(callback);
@@ -243,30 +207,12 @@ export class ComponentThunk {
   }
   render(previous) {
     if (previous && previous.component) {
-      let // other = previous.component,
-          prev = previous.vnode.component,
+      let prev = previous.vnode.component,
           next = this.component;
       if (prev && prev.key !== next.key) return new ComponentWidget(next);
-      // console.log(other === prev);
       prev.assignObject(prev.context, next.context);
-      // prev.replaceObjectProperty('context', next.context);
-      // prev.replaceObjectProperty('props', next.props);
-      // debugger;
-      // if (other !== prev || next.next.state) {
-      //   prev.mergeObjectProperty('state', next.state);
-      // }
-      // if ((/GSWorld|GSElements|Canvas/).test(prev.displayName)) debugger;
-      // prev.replaceObjectProperty('props', next.props);
-      // if (other !== prev || next.next.state) {
-      //   prev.mergeObjectProperty('state', next.state);
-      // }
       prev.replaceProps(next.props);
-      console.log(prev.state, next.state);
-      debugger;
-      if (next.isVolatile) {
-        prev.setState(next.state);
-      }
-      // previous.vnode.update();
+      if (next.isVolatile) prev.setState(next.state);
       return previous.vnode;
     }
     return new ComponentWidget(this.component);
@@ -285,12 +231,7 @@ export class ComponentWidget {
     if (!this.component.domNode) return;
     setZeroTimeout(componentDidMount);
     this.component.domNode.component = this.component;
-    if (this.component.props.ref) {
-      RefHook.prototype.hook.call({component: this.component.rootComponent, name: this.component.props.ref}, this.component.domNode);
-    }
-    // if (this.component.props.refHook) {
-    //   this.component.props.refHook.hook(this.component.domNode, 'ref');
-    // }
+    this.refHook();
     return this.component.domNode;
   }
   update(previous, domNode) {
@@ -298,17 +239,19 @@ export class ComponentWidget {
     this.component.update();
     if (this.component.domNode) {
       this.component.domNode.component = this.component;
-      if (this.component.props.ref) {
-        RefHook.prototype.hook.call({component: this.component, name: this.component.props.ref}, this.component.domNode);
-      }
-      // if (this.component.props.refHook) {
-      //   this.component.props.refHook.hook(this.component.domNode, 'ref');
-      // }
+      this.refHook()
     }
     return this.component.domNode;
   }
   destroy(domNode) {
     this.component.unmount();
+  }
+  refHook() {
+    if (this.component.props.ref) {
+      RefHook.prototype.hook.call(
+        {component: this.component.rootComponent, name: this.component.props.ref},
+        this.component.domNode);
+    }
   }
 }
 
@@ -327,13 +270,10 @@ export class ComponentWidget {
 
 export class RefHook {
   constructor(name, component) {
-    // debugger;
     this.name = name;
     this.component = component;
   }
   hook(domNode, propName, previousValue) {
-    // debugger;
-    // console.log('ref hook', this.name, this.component, domNode.component, domNode, new Error().stack);
     let refs = this.component.refs;
     if (this.name.charAt(0) === '$') {
       refs[this.name] = refs[this.name] || [];
@@ -478,15 +418,9 @@ export function render(virtualElement, parentDomNode, callback, delay) {
 
 export function resolve(component) {
   // TODO: refs are not being declared correctly, they work on the parent component, and not the component where they were defined in render()
-  // debugger;
   walkVirtual(component.virtualElement, (def, parent, root, parentComponent) => {
     if (def) {
       if (def.component) {
-        // console.log('got here', def.component.props.ref);
-        // if (def.component.props.ref) {
-        //   debugger;
-        //   def.component.props.refHook = new RefHook(def.component.props.ref, component);
-        // }
         def.component.setupContext(parentComponent, component);
       }
       else if (def.props && def.props.ref) {
@@ -529,7 +463,7 @@ export function walkVirtual(definition, iterator, parent, root, parentComponent)
   else if (definition.isComponent) {
     parentComponent = definition;
     children = definition.component.props.children;
-    console.log(children, definition.component.next.props);
+    // console.log(children, definition.component.next.props);
   }
   else children = definition.children;
   if (Array.isArray(children)) {
