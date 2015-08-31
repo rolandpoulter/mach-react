@@ -32,9 +32,9 @@ export default function (Component, _React) {
       );
     }
 
-    componentWillUpdate() {
-      // debugger;
-    }
+    // componentWillUpdate() {
+    //   debugger;
+    // }
 
     componentDidUpdate() {
       if (this.state.onUpdated) {

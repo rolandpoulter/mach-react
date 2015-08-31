@@ -2780,7 +2780,6 @@
 	    this.resolveDOM = this.constructor.resolveDOM;
 	    this.isUpdating = false;
 	    this.props = this.assignObject({}, this.constructor.defaultProps, this.props);
-	    this.props.key = this.props.key || Math.floor(1024 + Math.random() * 31743).toString(32);
 	    this.state = {};
 	    this.context = {};
 	    this.next = {};
@@ -2797,18 +2796,6 @@
 	      return this;
 	    }
 	  }, {
-	    key: 'markVolatile',
-	    value: function markVolatile() {
-	      var _this = this;
-
-	      if (!this.isVolatile) {
-	        this.isVolatile = true;
-	        this.once('update', function () {
-	          _this.isVolatile = false;
-	        });
-	      }
-	    }
-	  }, {
 	    key: 'mergeObjectProperty',
 	    value: function mergeObjectProperty(property, value) {
 	      var changes = this.next[property] = this.next[property] || [];
@@ -2817,14 +2804,14 @@
 	  }, {
 	    key: 'mount',
 	    value: function mount(parent) {
-	      var _this2 = this;
+	      var _this = this;
 
 	      this.refs = {};
 	      this.componentWillMount && this.componentWillMount();
 	      this.update(true);
 	      var finishMount = function finishMount() {
-	        _this2.componentDidMount && _this2.componentDidMount();
-	        _this2.emit('mount');
+	        _this.componentDidMount && _this.componentDidMount();
+	        _this.emit('mount');
 	      };
 	      if (parent) {
 	        this.constructor.appendDOM(this.domNode, parent);
@@ -2887,7 +2874,7 @@
 	  }, {
 	    key: 'update',
 	    value: function update(force) {
-	      var _this3 = this;
+	      var _this2 = this;
 
 	      this.boundUpdate = null;
 	      this.isUpdating = true;
@@ -2903,9 +2890,9 @@
 	        }
 	        changes.forEach(function (change) {
 	          if (property === 'state' && typeof change === 'function') {
-	            change = change.call(_this3, temp.state, temp.props);
+	            change = change.call(_this2, temp.state, temp.props);
 	          }
-	          _this3.assignObject(temp[property], change);
+	          _this2.assignObject(temp[property], change);
 	        });
 	      });
 	      if (!force && this.shouldComponentUpdate && !this.shouldComponentUpdate(temp.props, temp.state)) return;
@@ -2914,13 +2901,14 @@
 	      this.refs = {};
 	      this.lastVirtualElement = this.virtualElement;
 	      this.virtualElement = this.safeRender();
-	      this.virtualElement.properties.key = this.virtualElement.properties.key || this.props.key;
-	      this.virtualElement.key = this.virtualElement.key || this.props.key;
+	      // this.virtualElement.properties.key = this.virtualElement.properties.key || this.props.key;
+	      // this.virtualElement.key = this.virtualElement.key || this.props.key;
 	      this.domNode = this.resolveDOM(this);
 	      var finishUpdate = function finishUpdate() {
-	        !force && _this3.componentDidUpdate && _this3.componentDidUpdate();
-	        _this3.emit('update');
-	        _this3.isUpdating = false;
+	        !force && _this2.componentDidUpdate && _this2.componentDidUpdate();
+	        _this2.emit('update');
+	        _this2.isUpdating = false;
+	        _this2.lastComponent = null;
 	      };
 	      (0, _setZeroTimeout3['default'])(finishUpdate);
 	    }
@@ -2989,7 +2977,6 @@
 	  }, {
 	    key: 'replaceState',
 	    value: function replaceState(newState, callback) {
-	      this.markVolatile();
 	      this.replaceObjectProperty('state', newState);
 	      this.queueUpdate(callback);
 	    }
@@ -3003,7 +2990,6 @@
 	  }, {
 	    key: 'setState',
 	    value: function setState(nextState, callback) {
-	      this.markVolatile();
 	      this.componentWillReceiveState && this.componentWillReceiveState(nextState);
 	      this.mergeObjectProperty('state', nextState);
 	      this.queueUpdate(callback);
@@ -3023,49 +3009,17 @@
 
 	exports.Component = Component;
 
-	var ComponentThunk = (function () {
-	  function ComponentThunk(Component, props, children, context) {
-	    _classCallCheck(this, ComponentThunk);
-
-	    this.type = 'Thunk';
-	    this.isComponent = true;
-
-	    props = props || {};
-	    props.children = props.children ? props.children.concat(children) : children;
-	    this.component = new Component(props, context);
-	  }
-
-	  _createClass(ComponentThunk, [{
-	    key: 'render',
-	    value: function render(previous) {
-	      if (previous && previous.component) {
-	        var prev = previous.vnode.component,
-	            next = this.component;
-	        if (prev && prev.key !== next.key) return new ComponentWidget(next);
-	        prev.assignObject(prev.context, next.context);
-	        prev.replaceProps(next.props);
-	        if (next.isVolatile) prev.setState(next.state);
-	        previous.vnode.refHook();
-	        return previous.vnode;
-	      }
-	      return new ComponentWidget(this.component);
-	    }
-	  }]);
-
-	  return ComponentThunk;
-	})();
-
-	exports.ComponentThunk = ComponentThunk;
-
 	var ComponentWidget = (function () {
-	  function ComponentWidget(component) {
+	  function ComponentWidget(Component, props, children, context) {
 	    _classCallCheck(this, ComponentWidget);
 
 	    this.type = 'Widget';
 
-	    this.component = component;
-	    this.name = true;
-	    this.id = this.component.props.key;
+	    props = props || {};
+	    props.children = props.children ? props.children.concat(children) : children;
+	    this.component = new Component(props, context);
+	    this.name = this.component.displayName;
+	    this.id = this.name;
 	  }
 
 	  _createClass(ComponentWidget, [{
@@ -3081,6 +3035,8 @@
 	  }, {
 	    key: 'update',
 	    value: function update(previous, domNode) {
+	      this.component.lastComponent = domNode.component || previous.component;
+	      this.component.virtualElement = this.component.lastComponent.virtualElement;
 	      this.component.update();
 	      if (this.component.domNode) {
 	        this.component.domNode.component = this.component;
@@ -3234,10 +3190,9 @@
 	    if (props.cssSelector) type += cssSelector;
 	    // TODO: you have to make sure to add svg={true} to every svg element or else it wont work
 	    definition = (props.svg ? _virtualDomVirtualHyperscriptSvg2['default'] : _virtualDom.h)(type, props, children);
-	    // definition.context = context;
 	  } else {
-	      definition = new ComponentThunk(type, props, children, context);
-	    }
+	    definition = new ComponentWidget(type, props, children, context);
+	  }
 	  return definition;
 	}
 
@@ -3302,6 +3257,7 @@
 	}
 
 	function resolve(component) {
+	  // TODO: keep track of component keys, and figure out how to determine if a new component should have an old key
 	  // TODO: refs are not being declared correctly, they work on the parent component,
 	  //       and not the component where they were defined in render()
 	  walkVirtual(component.virtualElement, function (def, parent, root, parentComponent) {
@@ -3313,7 +3269,7 @@
 	      }
 	    }
 	  });
-	  var domNode = component.domNode;
+	  var domNode = component.domNode || component.lastComponent && component.lastComponent.domNode;
 	  var lastDomNode = domNode;
 	  if (!domNode) {
 	    domNode = (0, _virtualDom.create)(component.virtualElement);
@@ -3323,10 +3279,6 @@
 	    domNode.component = component;
 	    domNode = (0, _virtualDom.patch)(domNode, _changes);
 	    if (domNode) domNode.component = component;
-	    if (component.domNode !== domNode && component.domNode.parentNode && !domNode.parentNode) {
-	      console.warn(new Error(component.displayName + ': will replace domNode.').stack);
-	      component.domNode.parentNode.replaceNode(domNode, component.domNode);
-	    }
 	  }
 	  if (lastDomNode && lastDomNode !== domNode) {
 	    if (lastDomNode.component && lastDomNode.component.domNode === lastDomNode) {

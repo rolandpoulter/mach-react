@@ -30,7 +30,6 @@ export class BaseComponent extends EventEmitter {
   constructor() {
     super();
     this.props = this.assignObject({}, this.constructor.defaultProps, this.props);
-    this.props.key = this.props.key || (Math.floor(1024 + Math.random() * 31743)).toString(32);
     this.state = {};
     this.context = {};
     this.next = {};
@@ -44,12 +43,6 @@ export class BaseComponent extends EventEmitter {
     return this;
   }
   isUpdating = false;
-  markVolatile() {
-    if (!this.isVolatile) {
-      this.isVolatile = true;
-      this.once('update', () => {this.isVolatile = false});
-    }
-  }
   mergeObjectProperty(property, value) {
     let changes = this.next[property] = this.next[property] || [];
     changes.push(value);
@@ -133,13 +126,14 @@ export class BaseComponent extends EventEmitter {
     this.refs = {};
     this.lastVirtualElement = this.virtualElement;
     this.virtualElement = this.safeRender();
-    this.virtualElement.properties.key = this.virtualElement.properties.key || this.props.key;
-    this.virtualElement.key = this.virtualElement.key || this.props.key;
+    // this.virtualElement.properties.key = this.virtualElement.properties.key || this.props.key;
+    // this.virtualElement.key = this.virtualElement.key || this.props.key;
     this.domNode = this.resolveDOM(this);
     let finishUpdate = () => {
       !force && this.componentDidUpdate && this.componentDidUpdate();
       this.emit('update');
       this.isUpdating = false;
+      this.lastComponent = null;
     };
     setZeroTimeout(finishUpdate);
   }
@@ -173,7 +167,6 @@ export default class ReactComponent extends BaseComponent {
     this.autoUpdateWhenPropsChange && this.queueUpdate(callback);
   }
   replaceState(newState, callback) {
-    this.markVolatile();
     this.replaceObjectProperty('state', newState);
     this.queueUpdate(callback);
   }
@@ -183,7 +176,6 @@ export default class ReactComponent extends BaseComponent {
     this.autoUpdateWhenPropsChange && this.queueUpdate(callback);
   }
   setState(nextState, callback) {
-    this.markVolatile();
     this.componentWillReceiveState && this.componentWillReceiveState(nextState);
     this.mergeObjectProperty('state', nextState);
     this.queueUpdate(callback);
@@ -192,35 +184,14 @@ export default class ReactComponent extends BaseComponent {
 
 export let Component = ReactComponent;
 
-export class ComponentThunk {
-  type = 'Thunk';
-  isComponent = true;
+export class ComponentWidget {
+  type = 'Widget';
   constructor(Component, props, children, context) {
     props = props || {};
     props.children = props.children ? props.children.concat(children) : children;
     this.component = new Component(props, context);
-  }
-  render(previous) {
-    if (previous && previous.component) {
-      let prev = previous.vnode.component,
-          next = this.component;
-      if (prev && prev.key !== next.key) return new ComponentWidget(next);
-      prev.assignObject(prev.context, next.context);
-      prev.replaceProps(next.props);
-      if (next.isVolatile) prev.setState(next.state);
-      previous.vnode.refHook();
-      return previous.vnode;
-    }
-    return new ComponentWidget(this.component);
-  }
-}
-
-export class ComponentWidget {
-  type = 'Widget';
-  constructor(component) {
-    this.component = component;
-    this.name = true;
-    this.id = this.component.props.key;
+    this.name = this.component.displayName;
+    this.id = this.name;
   }
   init() {
     let componentDidMount = this.component.mount();
@@ -231,10 +202,12 @@ export class ComponentWidget {
     return this.component.domNode;
   }
   update(previous, domNode) {
+    this.component.lastComponent = domNode.component || previous.component;
+    this.component.virtualElement = this.component.lastComponent.virtualElement;
     this.component.update();
     if (this.component.domNode) {
       this.component.domNode.component = this.component;
-      this.refHook()
+      this.refHook();
     }
     return this.component.domNode;
   }
@@ -330,10 +303,9 @@ export function create(type, props, children, context) {
     if (props.cssSelector) type += cssSelector;
     // TODO: you have to make sure to add svg={true} to every svg element or else it wont work
     definition = (props.svg ? svg : h)(type, props, children);
-    // definition.context = context;
   }
   else {
-    definition = new ComponentThunk(type, props, children, context);
+    definition = new ComponentWidget(type, props, children, context);
   }
   return definition;
 }
@@ -399,6 +371,7 @@ export function render(virtualElement, parentDomNode, callback, delay) {
 }
 
 export function resolve(component) {
+  // TODO: keep track of component keys, and figure out how to determine if a new component should have an old key
   // TODO: refs are not being declared correctly, they work on the parent component,
   //       and not the component where they were defined in render()
   walkVirtual(component.virtualElement, (def, parent, root, parentComponent) => {
@@ -411,7 +384,7 @@ export function resolve(component) {
       }
     }
   });
-  let domNode = component.domNode;
+  let domNode = component.domNode || component.lastComponent && component.lastComponent.domNode;
   let lastDomNode = domNode;
   if (!domNode) {
     domNode = createVirtualElement(component.virtualElement);
@@ -422,10 +395,6 @@ export function resolve(component) {
     domNode.component = component;
     domNode = patch(domNode, changes);
     if (domNode) domNode.component = component;
-    if (component.domNode !== domNode && component.domNode.parentNode && !domNode.parentNode) {
-      console.warn(new Error(component.displayName + ': will replace domNode.').stack);
-      component.domNode.parentNode.replaceNode(domNode, component.domNode);
-    }
   }
   if (lastDomNode && lastDomNode !== domNode) {
     if (lastDomNode.component && lastDomNode.component.domNode === lastDomNode) {
