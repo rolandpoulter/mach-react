@@ -112,6 +112,9 @@ export class BaseComponent extends EventEmitter {
         changes = changes.slice(lastNull + 1);
         temp[property] = {};
       }
+      if (temp[property] === this[property] && changes.length) {
+        temp[property] = this.assignObject({}, temp[property]);
+      }
       changes.forEach(change => {
         if (property === 'state' && typeof change === 'function') {
           change = change.call(this, temp.state, temp.props);
@@ -204,6 +207,7 @@ export class ComponentWidget {
   update(previous, domNode) {
     this.component.lastComponent = domNode.component || previous.component;
     this.component.virtualElement = this.component.lastComponent.virtualElement;
+    this.component.assignObject(this.component.state, previous.component.state);
     this.component.update();
     if (this.component.domNode) {
       this.component.domNode.component = this.component;

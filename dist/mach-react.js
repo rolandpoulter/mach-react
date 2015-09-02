@@ -2879,7 +2879,10 @@
 	      this.boundUpdate = null;
 	      this.isUpdating = true;
 	      var next = this.next,
-	          temp = { props: this.props, state: this.state };
+	          temp = {
+	        props: this.assignObject({}, this.props),
+	        state: this.assignObject({}, this.state)
+	      };
 	      this.next = {};
 	      ['props', 'state'].forEach(function (property) {
 	        var changes = next[property] || [],
