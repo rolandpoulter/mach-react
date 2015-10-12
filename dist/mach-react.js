@@ -2779,10 +2779,11 @@
 	    this.assignObject = this.constructor.assignObject;
 	    this.resolveDOM = this.constructor.resolveDOM;
 	    this.isUpdating = false;
-	    this.props = this.assignObject({}, this.constructor.defaultProps, this.props);
-	    this.state = {};
-	    this.context = {};
+	    this.props = this.props || {};
+	    this.state = this.state || {};
+	    this.context = this.context || {};
 	    this.next = {};
+	    this.assignObject(this.props, this.constructor.defaultProps, this.props);
 	    this.constructor.mixin && this.constructor.mixin(this.constructor);
 	  }
 
@@ -2838,7 +2839,7 @@
 	    }
 	  }, {
 	    key: 'setupContext',
-	    value: function setupContext(parentComponent, rootComponent) {
+	    value: function setupContext(rootComponent, parentComponent) {
 	      this.rootComponent = rootComponent;
 	      this.parentComponent = parentComponent;
 	      this.context = this.assignObject({}, rootComponent.context, rootComponent && rootComponent.getChildContext());
@@ -2849,7 +2850,7 @@
 	  }, {
 	    key: 'unmount',
 	    value: function unmount() {
-	      this.componentWillUnmount && his.componentWillUnmount();
+	      this.componentWillUnmount && this.componentWillUnmount();
 	      this.lastVirtualElement = this.virtualElement;
 	      this.virtualElement = null;
 	      this.domNode = this.resolveDOM(this);
@@ -2879,10 +2880,7 @@
 	      this.boundUpdate = null;
 	      this.isUpdating = true;
 	      var next = this.next,
-	          temp = {
-	        props: this.assignObject({}, this.props),
-	        state: this.assignObject({}, this.state)
-	      };
+	          temp = { props: this.props, state: this.state };
 	      this.next = {};
 	      ['props', 'state'].forEach(function (property) {
 	        var changes = next[property] || [],
@@ -2890,6 +2888,9 @@
 	        if (lastNull !== -1) {
 	          changes = changes.slice(lastNull + 1);
 	          temp[property] = {};
+	        }
+	        if (temp[property] === _this2[property] && changes.length) {
+	          temp[property] = _this2.assignObject({}, temp[property]);
 	        }
 	        changes.forEach(function (change) {
 	          if (property === 'state' && typeof change === 'function') {
@@ -2906,6 +2907,7 @@
 	      this.virtualElement = this.safeRender();
 	      // this.virtualElement.properties.key = this.virtualElement.properties.key || this.props.key;
 	      // this.virtualElement.key = this.virtualElement.key || this.props.key;
+	      if (this.domNode) delete this.domNode.component;
 	      this.domNode = this.resolveDOM(this);
 	      var finishUpdate = function finishUpdate() {
 	        !force && _this2.componentDidUpdate && _this2.componentDidUpdate();
@@ -3032,7 +3034,7 @@
 	      if (!this.component.domNode) return;
 	      (0, _setZeroTimeout3['default'])(componentDidMount);
 	      this.component.domNode.component = this.component;
-	      this.refHook();
+	      this.refHook(this.component.domNode);
 	      return this.component.domNode;
 	    }
 	  }, {
@@ -3040,23 +3042,25 @@
 	    value: function update(previous, domNode) {
 	      this.component.lastComponent = domNode.component || previous.component;
 	      this.component.virtualElement = this.component.lastComponent.virtualElement;
+	      this.component.assignObject(this.component.state, previous.component.state);
 	      this.component.update();
 	      if (this.component.domNode) {
 	        this.component.domNode.component = this.component;
-	        this.refHook();
 	      }
+	      this.refHook(domNode);
 	      return this.component.domNode;
 	    }
 	  }, {
 	    key: 'destroy',
 	    value: function destroy(domNode) {
 	      this.component.unmount();
+	      delete domNode.component;
 	    }
 	  }, {
 	    key: 'refHook',
-	    value: function refHook() {
-	      if (this.component.props.ref) {
-	        RefHook.prototype.hook.call({ component: this.component.rootComponent, name: this.component.props.ref }, this.component.domNode);
+	    value: function refHook(domNode) {
+	      if (this.component.props.refHook) {
+	        this.component.props.refHook.hook(this.component.domNode || domNode);
 	      }
 	    }
 	  }]);
@@ -3067,17 +3071,17 @@
 	exports.ComponentWidget = ComponentWidget;
 
 	var RefHook = (function () {
-	  function RefHook(name, component) {
+	  function RefHook(name, rootComponent) {
 	    _classCallCheck(this, RefHook);
 
 	    this.name = name;
-	    this.component = component;
+	    this.rootComponent = rootComponent;
 	  }
 
 	  _createClass(RefHook, [{
 	    key: 'hook',
-	    value: function hook(domNode, propName, previousValue) {
-	      var refs = this.component.refs;
+	    value: function hook(domNode) {
+	      var refs = this.rootComponent.refs;
 	      if (this.name.charAt(0) === '$') {
 	        refs[this.name] = refs[this.name] || [];
 	        if (domNode) refs[this.name].push(domNode.component || domNode);
@@ -3099,7 +3103,7 @@
 
 	  _createClass(HtmlHook, [{
 	    key: 'hook',
-	    value: function hook(domNode, propName) {
+	    value: function hook(domNode) {
 	      var html = this.value && this.value.__html || this.value;
 	      if (typeof html === 'string') domNode.innerHTML = html;
 	    }
@@ -3114,8 +3118,6 @@
 	  function OnChangeHook(handler) {
 	    _classCallCheck(this, OnChangeHook);
 
-	    this.onFocusHandler = this.onFocus.bind(this);
-	    this.onBlurHandler = this.onBlur.bind(this);
 	    this.handler = handler;
 	  }
 
@@ -3145,17 +3147,32 @@
 	    }
 	  }, {
 	    key: 'hook',
-	    value: function hook(domNode, propName, previousValue) {
+	    value: function hook(domNode, previous) {
+	      var _this3 = this;
+
 	      this.lastValue = domNode.value;
-	      addEvent(domNode, 'focus', this.onFocusHandler);
-	      addEvent(domNode, 'blur', this.onBlurHandler);
+
+	      // TODO: this is causing a memory leak
+	      var onFocusHandler = function onFocusHandler(event) {
+	        _this3.onFocus(event);
+	      },
+	          onBlurHandler = function onBlurHandler(event) {
+	        _this3.onBlur(event);
+	      };
+	      addEvent(domNode, 'focus', onFocusHandler);
+	      addEvent(domNode, 'blur', onBlurHandler);
+
+	      if (this.remove) this.remove();
+	      this.remove = function () {
+	        _this3.cancelInterval();
+	        removeEvent(domNode, 'focus', onFocusHandler);
+	        removeEvent(domNode, 'blur', onBlurHandler);
+	      };
 	    }
 	  }, {
 	    key: 'unhook',
-	    value: function unhook(domNode, propName) {
-	      this.cancelInterval();
-	      removeEvent(domNode, 'focus', this.onFocusHandler);
-	      removeEvent(domNode, 'blur', this.onBlurHandler);
+	    value: function unhook(domNode) {
+	      this.remove();
 	    }
 	  }]);
 
@@ -3186,15 +3203,16 @@
 	  if (element) throw new Error('Failed to detach element.');
 	}
 
-	function create(type, props, children, context) {
-	  var definition = undefined;
+	function create(element, props, children, context) {
+	  var definition = element,
+	      type = typeof element;
 	  props = fixProps(props || {});
-	  if (typeof type === 'string') {
-	    if (props.cssSelector) type += cssSelector;
+	  if (type === 'string') {
+	    if (props.cssSelector) element += cssSelector;
 	    // TODO: you have to make sure to add svg={true} to every svg element or else it wont work
-	    definition = (props.svg ? _virtualDomVirtualHyperscriptSvg2['default'] : _virtualDom.h)(type, props, children);
-	  } else {
-	    definition = new ComponentWidget(type, props, children, context);
+	    definition = (props.svg ? _virtualDomVirtualHyperscriptSvg2['default'] : _virtualDom.h)(element, props, children);
+	  } else if (type === 'function') {
+	    definition = element.prototype && element.prototype.displayName ? new ComponentWidget(element, props, children, context) : element(props);
 	  }
 	  return definition;
 	}
@@ -3232,81 +3250,105 @@
 	  return newProps;
 	}
 
+	// TODO: guard against css properties that do not use a unit.
+	var autoMap = { _off: 0, _on: 1, width: 0, height: 0 }; // on by default
 	fixProps.fixStyles = function fixStyles(styles) {
 	  if (styles) Object.keys(styles).forEach(function (key) {
+	    if (autoMap[key]) return;
 	    if (typeof styles[key] === 'number') styles[key] += 'px';
 	  });
+
 	  return styles;
 	};
 
 	function render(virtualElement, parentDomNode, callback, delay) {
 	  var detacher = undefined;
-	  if (virtualElement.isComponent) {
+
+	  if (virtualElement.component && virtualElement.component.mount) {
 	    virtualElement.component.mount(parentDomNode);
 	    detacher = virtualElement.component.unmount.bind(virtualElement.component);
 	  } else {
 	    (function () {
 	      var domNode = (0, _virtualDom.create)(virtualElement);
+
 	      attach(domNode, parentDomNode);
+
 	      detacher = function () {
-	        (0, _virtualDom.diff)(virtualElement, null);
+	        var changes = (0, _virtualDom.diff)(virtualElement, null);
 	        domNode = (0, _virtualDom.patch)(domNode, changes);
 	        detach(domNode, parentDomNode);
 	      };
 	    })();
 	  }
+
 	  if (callback) setTimeout(callback, delay || 0);
+
 	  return detacher;
 	}
 
-	function resolve(component) {
-	  // TODO: keep track of component keys, and figure out how to determine if a new component should have an old key
-	  // TODO: refs are not being declared correctly, they work on the parent component,
-	  //       and not the component where they were defined in render()
-	  walkVirtual(component.virtualElement, function (def, parent, root, parentComponent) {
+	function resolve(component, rootComponent) {
+	  walkVirtual(component.virtualElement, function (def, rootComponent, parentComponent) {
 	    if (def) {
 	      if (def.component) {
-	        def.component.setupContext(parentComponent, component);
-	      } else if (def.props && def.props.ref) {
-	        def.props.refHook = new RefHook(def.props.ref, component);
+	        if (def.component.setupContext) {
+	          def.component.setupContext(rootComponent, parentComponent);
+	        }
+	        if (def.component.props && def.component.props.ref) {
+	          def.component.props.refHook = def.component.props.refHook || new RefHook(def.component.props.ref, rootComponent);
+	        }
+	      } else if (def.properties && def.properties.ref) {
+	        def.properties.refHook = def.properties.refHook || new RefHook(def.properties.ref, rootComponent);
 	      }
 	    }
-	  });
+	  }, component);
+
 	  var domNode = component.domNode || component.lastComponent && component.lastComponent.domNode;
+
 	  var lastDomNode = domNode;
+
 	  if (!domNode) {
 	    domNode = (0, _virtualDom.create)(component.virtualElement);
 	    if (domNode) domNode.component = component;
 	  } else {
-	    var _changes = (0, _virtualDom.diff)(component.lastVirtualElement, component.virtualElement);
+	    var changes = (0, _virtualDom.diff)(component.lastVirtualElement, component.virtualElement);
 	    domNode.component = component;
-	    domNode = (0, _virtualDom.patch)(domNode, _changes);
+	    domNode = (0, _virtualDom.patch)(domNode, changes);
 	    if (domNode) domNode.component = component;
 	  }
+
 	  if (lastDomNode && lastDomNode !== domNode) {
 	    if (lastDomNode.component && lastDomNode.component.domNode === lastDomNode) {
 	      lastDomNode.component.domNode = null;
 	    }
 	    lastDomNode.component = null;
 	  }
+
 	  return domNode;
 	}
 
-	function walkVirtual(definition, iterator, parent, root, parentComponent) {
-	  root = root || definition;
-	  var children = null;
+	function walkVirtual(definition, iterator, rootComponent, parentComponent) {
+	  var children = [];
+
 	  if (!definition || typeof definition !== 'object') return;
 	  if (definition.constructor.name === 'VirtualText') return;
-	  iterator(definition, parent, root);
-	  if (Array.isArray(definition)) children = definition;else if (definition.isComponent) {
-	    parentComponent = definition;
-	    children = definition.component.props.children;
-	    // TODO: getting children from props here might be dangerous
-	    // console.log(children, definition.component.next.props);
-	  } else children = definition.children;
+
+	  iterator(definition, rootComponent, parentComponent);
+
+	  if (Array.isArray(definition)) {
+	    children = definition.slice(0);
+	  }
+	  if (definition.component) {
+	    if (definition.component.props) {
+	      children = children.concat(definition.component.props.children || []);
+	    }
+	  }
+	  if (Array.isArray(definition.children)) {
+	    children = children.concat(definition.children);
+	  }
+
 	  if (Array.isArray(children)) {
 	    children.forEach(function (child) {
-	      return walkVirtual(child, iterator, definition, root, parentComponent);
+	      return walkVirtual(child, iterator, rootComponent, definition.component || parentComponent);
 	    });
 	  }
 	}
@@ -3350,36 +3392,28 @@
 	var timeouts = [];
 	var messageName = 'zero-timeout-message';
 
-	// let cancelAnimationFrame = window.cancelAnimationFrame || window.mozCancelAnimationFrame;
-	// let requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
-	//                             window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
-
 	var ids = {};
 
-	// TODO: try MutationObserver
-
 	function setZeroTimeout(fn) {
-	  // if (requestAnimationFrame && cancelAnimationFrame) {
-	  //   return ids[requestAnimationFrame.call(window, fn)] = fn;
-	  // }
-	  // if (global.setImmediate) return ids[global.setImmediate(fn)] = fn;
+	  // TODO: add MutationObserver
+
 	  if (global.postMessage) {
 	    if (timeouts.indexOf(fn) === -1) timeouts.push(fn);
 	    return global.postMessage(messageName, '*');
 	  }
+
 	  ids[setTimeout(fn, 0)] = fn;
 	}
 
 	function unsetZeroTimeout(fn) {
-	  // if (requestAnimationFrame && cancelAnimationFrame) {
-	  //   return cancelAnimationFrame.call(window, findId(fn));
-	  // }
-	  // if (global.clearImmediate) return global.clearImmediate(findId(fn));
+	  // TODO: remove MutationObserver
+
 	  if (global.postMessage) {
 	    var index = timeouts.indexOf(fn);
 	    if (index === -1) timeouts[index] = null;
 	    return;
 	  }
+
 	  clearTimeout(findId(fn));
 	}
 
@@ -3389,7 +3423,12 @@
 	  }return null;
 	}
 
-	if (typeof window !== 'undefined') window.addEventListener('message', handleMessage, true);
+	if (typeof window !== 'undefined') {
+	  window.addEventListener('message', handleMessage, true);
+	} else {
+	  console.error(new Error('setZeroTimeout unavailable.'));
+	}
+
 	function handleMessage(event) {
 	  if (event.source === window && event.data === messageName) {
 	    event.stopPropagation();

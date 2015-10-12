@@ -1,13 +1,12 @@
 language: node_js
 node_js:
-- '0.10'
-- '0.12'
-before_install:
-- npm install npm -g
+  - '0.10'
+  - '0.12'
+  - '4.0'
+  - '4.1'
 before_script:
-- npm install
-- npm install istanbul coveralls
-script: npm run test-ci
-env:
-  global:
-  - secure: TODO
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+  - npm install
+script:
+  - npm run test-ci

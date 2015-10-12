@@ -29,10 +29,11 @@ export class BaseComponent extends EventEmitter {
   resolveDOM = this.constructor.resolveDOM;
   constructor() {
     super();
-    this.props = this.assignObject({}, this.constructor.defaultProps, this.props);
-    this.state = {};
-    this.context = {};
+    this.props = this.props || {};
+    this.state = this.state || {};
+    this.context = this.context || {};
     this.next = {};
+    this.assignObject(this.props, this.constructor.defaultProps, this.props);
     this.constructor.mixin && this.constructor.mixin(this.constructor);
   }
   cancelUpdate() {
@@ -68,7 +69,7 @@ export class BaseComponent extends EventEmitter {
   }
   safeRender() { return this.render(this.constructor); }
   safeUpdate(force) { (force || this.boundUpdate) && this.cancelUpdate().update(force); }
-  setupContext(parentComponent, rootComponent) {
+  setupContext(rootComponent, parentComponent) {
     this.rootComponent = rootComponent;
     this.parentComponent = parentComponent;
     this.context = this.assignObject({},
@@ -79,7 +80,7 @@ export class BaseComponent extends EventEmitter {
     }
   }
   unmount() {
-    this.componentWillUnmount && his.componentWillUnmount();
+    this.componentWillUnmount && this.componentWillUnmount();
     this.lastVirtualElement = this.virtualElement;
     this.virtualElement = null;
     this.domNode = this.resolveDOM(this);
@@ -131,6 +132,7 @@ export class BaseComponent extends EventEmitter {
     this.virtualElement = this.safeRender();
     // this.virtualElement.properties.key = this.virtualElement.properties.key || this.props.key;
     // this.virtualElement.key = this.virtualElement.key || this.props.key;
+    if (this.domNode) delete this.domNode.component;
     this.domNode = this.resolveDOM(this);
     let finishUpdate = () => {
       !force && this.componentDidUpdate && this.componentDidUpdate();
@@ -201,7 +203,7 @@ export class ComponentWidget {
     if (!this.component.domNode) return;
     setZeroTimeout(componentDidMount);
     this.component.domNode.component = this.component;
-    this.refHook();
+    this.refHook(this.component.domNode);
     return this.component.domNode;
   }
   update(previous, domNode) {
@@ -211,29 +213,28 @@ export class ComponentWidget {
     this.component.update();
     if (this.component.domNode) {
       this.component.domNode.component = this.component;
-      this.refHook();
     }
+    this.refHook(domNode);
     return this.component.domNode;
   }
   destroy(domNode) {
     this.component.unmount();
+    delete domNode.component;
   }
-  refHook() {
-    if (this.component.props.ref) {
-      RefHook.prototype.hook.call(
-        {component: this.component.rootComponent, name: this.component.props.ref},
-        this.component.domNode);
+  refHook(domNode) {
+    if (this.component.props.refHook) {
+      this.component.props.refHook.hook(this.component.domNode || domNode);
     }
   }
 }
 
 export class RefHook {
-  constructor(name, component) {
+  constructor(name, rootComponent) {
     this.name = name;
-    this.component = component;
+    this.rootComponent = rootComponent;
   }
-  hook(domNode, propName, previousValue) {
-    let refs = this.component.refs;
+  hook(domNode) {
+    let refs = this.rootComponent.refs;
     if (this.name.charAt(0) === '$') {
       refs[this.name] = refs[this.name] || [];
       if (domNode) refs[this.name].push(domNode.component || domNode);
@@ -244,15 +245,13 @@ export class RefHook {
 
 export class HtmlHook {
   constructor(value) { this.value = value; }
-  hook(domNode, propName) {
+  hook(domNode) {
     let html = this.value && this.value.__html || this.value;
     if (typeof html === 'string') domNode.innerHTML = html;
   }
 }
 
 export class OnChangeHook {
-  onFocusHandler = this.onFocus.bind(this);
-  onBlurHandler = this.onBlur.bind(this);
   constructor(handler) { this.handler = handler; }
   onFocus(event) {
     this.changeInterval = setInterval(this.detectChange.bind(this, event), 100);
@@ -268,15 +267,24 @@ export class OnChangeHook {
     }
   }
   cancelInterval() { clearInterval(this.changeInterval); }
-  hook(domNode, propName, previousValue) {
+  hook(domNode, previous) {
     this.lastValue = domNode.value;
-    addEvent(domNode, 'focus', this.onFocusHandler);
-    addEvent(domNode, 'blur', this.onBlurHandler)
+
+    // TODO: this is causing a memory leak
+    let onFocusHandler = event => { this.onFocus(event); },
+        onBlurHandler = event => { this.onBlur(event); };
+    addEvent(domNode, 'focus', onFocusHandler);
+    addEvent(domNode, 'blur', onBlurHandler)
+
+    if (this.remove) this.remove();
+    this.remove = () => {
+      this.cancelInterval();
+      removeEvent(domNode, 'focus', onFocusHandler);
+      removeEvent(domNode, 'blur', onBlurHandler);
+    };
   }
-  unhook(domNode, propName) {
-    this.cancelInterval();
-    removeEvent(domNode, 'focus', this.onFocusHandler);
-    removeEvent(domNode, 'blur', this.onBlurHandler);
+  unhook(domNode) {
+    this.remove();
   }
 }
 
@@ -300,16 +308,18 @@ export function detach(element) {
   if (element) throw new Error('Failed to detach element.');
 }
 
-export function create(type, props, children, context) {
-  let definition;
+export function create(element, props, children, context) {
+  let definition = element,
+      type = typeof element;
   props = fixProps(props || {});
-  if (typeof type === 'string') {
-    if (props.cssSelector) type += cssSelector;
+  if (type === 'string') {
+    if (props.cssSelector) element += cssSelector;
     // TODO: you have to make sure to add svg={true} to every svg element or else it wont work
-    definition = (props.svg ? svg : h)(type, props, children);
+    definition = (props.svg ? svg : h)(element, props, children);
   }
-  else {
-    definition = new ComponentWidget(type, props, children, context);
+  else if (type === 'function') {
+    definition = (element.prototype && element.prototype.displayName) ?
+      new ComponentWidget(element, props, children, context) : element(props);
   }
   return definition;
 }
@@ -348,82 +358,109 @@ export function fixProps(props) {
   return newProps;
 }
 
+// TODO: guard against css properties that do not use a unit.
+const autoMap = {_off:0, _on:1, width:0, height:0}; // on by default
 fixProps.fixStyles = function fixStyles(styles) {
   if (styles) Object.keys(styles).forEach(key => {
+    if (autoMap[key]) return;
     if (typeof styles[key] === 'number') styles[key] += 'px';
   });
+
   return styles;
 };
 
 export function render(virtualElement, parentDomNode, callback, delay) {
   let detacher;
-  if (virtualElement.isComponent) {
+
+  if (virtualElement.component && virtualElement.component.mount) {
     virtualElement.component.mount(parentDomNode);
     detacher = virtualElement.component.unmount.bind(virtualElement.component);
   }
+
   else {
     let domNode = createVirtualElement(virtualElement);
+
     attach(domNode, parentDomNode);
+
     detacher = function () {
-      diff(virtualElement, null);
+      let changes = diff(virtualElement, null);
       domNode = patch(domNode, changes);
       detach(domNode, parentDomNode);
     }
   }
+
   if (callback) setTimeout(callback, delay || 0);
+
   return detacher;
 }
 
-export function resolve(component) {
-  // TODO: keep track of component keys, and figure out how to determine if a new component should have an old key
-  // TODO: refs are not being declared correctly, they work on the parent component,
-  //       and not the component where they were defined in render()
-  walkVirtual(component.virtualElement, (def, parent, root, parentComponent) => {
+export function resolve(component, rootComponent) {
+  walkVirtual(component.virtualElement, (def, rootComponent, parentComponent) => {
     if (def) {
       if (def.component) {
-        def.component.setupContext(parentComponent, component);
+        if (def.component.setupContext) {
+          def.component.setupContext(rootComponent, parentComponent);
+        }
+        if (def.component.props && def.component.props.ref) {
+          def.component.props.refHook =
+            def.component.props.refHook || new RefHook(def.component.props.ref, rootComponent);
+        }
       }
-      else if (def.props && def.props.ref) {
-        def.props.refHook = new RefHook(def.props.ref, component);
+      else if (def.properties && def.properties.ref) {
+        def.properties.refHook =
+          def.properties.refHook || new RefHook(def.properties.ref, rootComponent);
       }
     }
-  });
-  let domNode = component.domNode || component.lastComponent && component.lastComponent.domNode;
+  }, component);
+
+  let domNode = component.domNode ||
+    component.lastComponent && component.lastComponent.domNode;
+
   let lastDomNode = domNode;
+
   if (!domNode) {
     domNode = createVirtualElement(component.virtualElement);
     if (domNode) domNode.component = component;
   }
+
   else {
     let changes = diff(component.lastVirtualElement, component.virtualElement);
     domNode.component = component;
     domNode = patch(domNode, changes);
     if (domNode) domNode.component = component;
   }
+
   if (lastDomNode && lastDomNode !== domNode) {
     if (lastDomNode.component && lastDomNode.component.domNode === lastDomNode) {
       lastDomNode.component.domNode = null;
     }
     lastDomNode.component = null;
   }
+
   return domNode;
 }
 
-export function walkVirtual(definition, iterator, parent, root, parentComponent) {
-  root = root || definition;
-  let children = null;
+export function walkVirtual(definition, iterator, rootComponent, parentComponent) {
+  let children = [];
+
   if (!definition || typeof definition !== 'object') return;
   if (definition.constructor.name === 'VirtualText') return;
-  iterator(definition, parent, root)
-  if (Array.isArray(definition)) children = definition;
-  else if (definition.isComponent) {
-    parentComponent = definition;
-    children = definition.component.props.children;
-    // TODO: getting children from props here might be dangerous
-    // console.log(children, definition.component.next.props);
+
+  iterator(definition, rootComponent, parentComponent);
+
+  if (Array.isArray(definition)) {
+    children = definition.slice(0);
   }
-  else children = definition.children;
+  if (definition.component) {
+    if (definition.component.props) {
+      children = children.concat(definition.component.props.children || []);
+    }
+  }
+  if (Array.isArray(definition.children)) {
+    children = children.concat(definition.children);
+  }
+
   if (Array.isArray(children)) {
-    children.forEach(child => walkVirtual(child, iterator, definition, root, parentComponent));
+    children.forEach(child => walkVirtual(child, iterator, rootComponent, definition.component || parentComponent));
   }
 }

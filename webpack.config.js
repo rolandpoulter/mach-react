@@ -1,5 +1,7 @@
 'use strict';
 
+var webpack = require('webpack');
+
 module.exports = {
   entry: {
     app: ['./src/index.js']
@@ -11,5 +13,10 @@ module.exports = {
   },
   output: {
     filename: './dist/mach-react.js'
-  }
+  },
+  plugins: [
+    new webpack.DefinePlugin({
+      'process.env.NODE_ENV': '"production"'
+    })
+  ]
 };

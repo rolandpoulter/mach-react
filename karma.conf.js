@@ -20,6 +20,14 @@ module.exports = function(config) {
       }
     },
 
+    // reporters: ['progress', 'coverage'],
+
+    coverageReporter: {
+      instrumenters: {isparta: require('isparta')},
+      instrumenter: {'**/*.js': 'isparta'},
+      instrumenterOptions: {isparta: {babel: {stage: 0}}}
+    },
+
     webpack: {
       module: require('./webpack.config').module,
       resolve: {
@@ -38,7 +46,9 @@ module.exports = function(config) {
     plugins: [
       require('karma-webpack'),
       require('karma-mocha'),
-      require('karma-chrome-launcher')
+      // require('karma-coverage'),
+      require('karma-chrome-launcher'),
+      require('karma-firefox-launcher')
     ],
 
     browsers: ['Chrome']

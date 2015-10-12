@@ -3,7 +3,8 @@
 
 var express = require('express'),
     webpack = require('webpack'),
-    webpackDevMiddleware = require('webpack-dev-middleware');
+    webpackDevMiddleware = require('webpack-dev-middleware'),
+    webpackConfig = require('../webpack.config');
 
 var app = express();
 
@@ -11,7 +12,8 @@ var compiler = webpack({
   entry: {
     app: ['./benchmark/index.js']
   },
-  module: require('../webpack.config').module,
+  module: webpackConfig.module,
+  plugins: webpackConfig.plugins,
   output: {
     path: '/',
     filename: 'bundle.js'

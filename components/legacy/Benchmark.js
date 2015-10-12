@@ -24,48 +24,48 @@ export default function (Component, _React) {
       message: 'Hello World'
     };
 
-    componentWillMount() {
-      console.log('WILL MOUNT', this.type, this.refs);
-      if (this.isMounted) console.log(this.isMounted());
-      console.log(this.x, this.y)
-    }
+    // componentWillMount() {
+      // console.log('WILL MOUNT', this.type, this.refs);
+      // if (this.isMounted) console.log(this.isMounted());
+      // console.log(this.x, this.y)
+    // }
 
     componentDidMount() {
-      console.log('DID MOUNT', this.type, this.refs);
-      if (this.isMounted) console.log(this.isMounted());
+      // console.log('DID MOUNT', this.type, this.refs);
+      // if (this.isMounted) console.log(this.isMounted());
       this.benchmark();
     }
 
-    componentWillReceiveState(nextState) {
-      console.log('GET STATE');
-    }
+    // componentWillReceiveState(nextState) {
+      // console.log('GET STATE');
+    // }
 
-    componentWillReceiveProps(nextProps) {
-      console.log('GET PROPS');
-    }
+    // componentWillReceiveProps(nextProps) {
+      // console.log('GET PROPS');
+    // }
 
-    componentWillUpdate(nextProps, nextState) {
-      console.log('WILL UPDATE', this.type, this.refs);
-    }
+    // componentWillUpdate(nextProps, nextState) {
+      // console.log('WILL UPDATE', this.type, this.refs);
+    // }
 
-    componentDidUpdate(prevProps, prevState) {
-      console.log('DID UPDATE', this.type, this.refs);
-    }
+    // componentDidUpdate(prevProps, prevState) {
+      // console.log('DID UPDATE', this.type, this.refs);
+    // }
 
-    componentWillUnmount() {
-      console.log('WILL UNMOUNT', this.type, this.refs);
-      if (this.isMounted) console.log(this.isMounted());
-    }
+    // componentWillUnmount() {
+      // console.log('WILL UNMOUNT', this.type, this.refs);
+      // if (this.isMounted) console.log(this.isMounted());
+    // }
 
-    componentDidUnmount() {
-      console.log('DID UNMOUNT', this.type, this.refs);
-      if (this.isMounted) console.log(this.isMounted());
-    }
+    // componentDidUnmount() {
+      // console.log('DID UNMOUNT', this.type, this.refs);
+      // if (this.isMounted) console.log(this.isMounted());
+    // }
 
-    shouldComponentUpdate(nextProps, nextState) {
-      console.log('SHOULD UPDATE?');
-      return true;
-    }
+    // shouldComponentUpdate(nextProps, nextState) {
+      // console.log('SHOULD UPDATE?');
+      // return true;
+    // }
 
     childContext = {
       testComponent: this
