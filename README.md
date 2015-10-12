@@ -6,7 +6,7 @@
 [![experimental](http://hughsk.github.io/stability-badges/dist/experimental.svg)](http://github.com/hughsk/stability-badges)
 
 #### Pros
- * Only ~12.5KB when gzipped. Read through the code in a day.
+ * Only ~12.5KB when minified and gzipped. Read through the code in a day.
  * Works like React with Radium, does css auto-prefixing and merging.
  * Runs much faster than production React, less code === faster.
  * Unstrict, and immutability is optional.
