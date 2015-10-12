@@ -20,16 +20,23 @@ module.exports = function(config) {
       }
     },
 
-    // reporters: ['progress', 'coverage'],
+    reporters: ['progress', 'coverage'],
 
     coverageReporter: {
-      instrumenters: {isparta: require('isparta')},
-      instrumenter: {'**/*.js': 'isparta'},
-      instrumenterOptions: {isparta: {babel: {stage: 0}}}
+      type: 'text'
     },
 
     webpack: {
-      module: require('./webpack.config').module,
+      module: {
+        loaders: require('./webpack.config').module.loaders,
+        preLoaders: [
+          {
+            test: /\.js$/,
+            include: require('path').resolve('src/'),
+            loader: 'isparta'
+          }
+        ]
+      },
       resolve: {
         modulesDirectories: [
           '',
@@ -46,11 +53,12 @@ module.exports = function(config) {
     plugins: [
       require('karma-webpack'),
       require('karma-mocha'),
-      // require('karma-coverage'),
+      require('karma-coverage'),
+      require('karma-coveralls'),
       require('karma-chrome-launcher'),
       require('karma-firefox-launcher')
     ],
 
-    browsers: ['Chrome', 'Firefox']
+    browsers: ['Chrome']
   });
 };

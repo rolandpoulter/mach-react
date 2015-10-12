@@ -5,6 +5,15 @@ module.exports = function(config) {
 
   config.set({
     autoWatch: false,
-    singleRun: true
+    singleRun: true,
+
+    reporters: ['progress', 'coverage', 'coveralls'],
+
+    coverageReporter: {
+      type: 'lcov', // lcov or lcovonly are required for generating lcov.info files
+      dir: 'coverage/'
+    },
+
+    browsers: ['Chrome', 'Firefox']
   });
 };
