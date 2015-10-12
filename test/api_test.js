@@ -134,7 +134,7 @@ describe('API', function () {
     return (
       <ApiTest api={this.api}></ApiTest>
     );
-  }));
+  }, 10));
 
   it('is ready to test.', function () {
     expect(this.harness).to.be.ok;

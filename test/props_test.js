@@ -19,7 +19,7 @@ class PropsTest extends Component {
   }
 }
 
-describe('Compnent.props', function () {
+describe('Component.props', function () {
   afterEach(cleanup);
 
   beforeEach(setup(function () {
@@ -43,7 +43,7 @@ describe('Compnent.props', function () {
     });
   });
 
-  it('can be replaced', function () {
+  it('can be replaced', function (done) {
     this.propsTest.props.invalid = true;
     expect(this.propsTest.props.props).to.not.be.ok;
     this.propsTest.replaceProps({prop: 'prop'}, function () {

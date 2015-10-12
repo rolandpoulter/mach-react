@@ -43,7 +43,7 @@ describe('Component.state', function () {
     });
   });
 
-  it('can be replaced', function () {
+  it('can be replaced', function (done) {
     this.stateTest.state.invalid = true;
     expect(this.stateTest.state.state).to.not.be.ok;
     this.stateTest.replaceState({state: 'state'}, function () {

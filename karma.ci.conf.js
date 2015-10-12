@@ -5,8 +5,6 @@ module.exports = function(config) {
 
   config.set({
     autoWatch: false,
-    singleRun: true,
-
-    browsers: ['Chrome', 'Firefox']
+    singleRun: true
   });
 };

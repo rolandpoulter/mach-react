@@ -51,6 +51,6 @@ module.exports = function(config) {
       require('karma-firefox-launcher')
     ],
 
-    browsers: ['Chrome']
+    browsers: ['Chrome', 'Firefox']
   });
 };
