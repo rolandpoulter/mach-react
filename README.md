@@ -6,15 +6,24 @@
 [![experimental](http://hughsk.github.io/stability-badges/dist/experimental.svg)](http://github.com/hughsk/stability-badges)
 
 
-React without the training wheels. Only ~12KB when gzipped. In worst case scenarios can be as much as 10x faster than React.
+#### Pros
+ * Only ~12.5KB when gzipped. Read through the code in a day.
+ * Works like React with Radium, does css auto-prefixing and merging.
+ * Runs much faster than production React, less code === faster.
+ * Unstrict, and immutability is optional.
+
+##### Cons
+ * Experiment and unstabled. Expect bugs and memory leaks.
+ * Created by an insane web developer.
+ * Unstrict, and immutability is optional.
 
 ![image](https://raw.githubusercontent.com/rolandpoulter/mach-react/master/benchmark.gif)
 
 #### Credits
- * React Facebook
- * Radium
- * virtual-dom
- * material-ui
+ * React Facebook -- Copied Component design.
+ * Radium -- Copied css auto-prefixing and css mixins for Components.
+ * virtual-dom -- Main dependency, provides virtual dom implementation.
+ * material-ui -- Copied project build process.
 
 [1]: https://secure.travis-ci.org/rolandpoulter/mach-react.svg
 [2]: https://travis-ci.org/rolandpoulter/mach-react
