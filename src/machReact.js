@@ -339,7 +339,10 @@ export function fixProps(props) {
     }
     if (prop === 'style') {
       let styles = props[prop];
-      if (Array.isArray(styles)) styles = Object.assign({}, ...styles);
+      if (Array.isArray(styles)) {
+        if (styles.__cssMergeCache__) styles = styles.__cssMergeCache__;
+        else styles = styles.__cssMergeCache__ = Object.assign({}, ...styles);
+      }
       newProps[prop] = typeof styles === 'string' ? styles : fixProps.fixStyles(styles);
       return;
     }
