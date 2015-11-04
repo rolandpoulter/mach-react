@@ -53,6 +53,7 @@ export class BaseComponent extends EventEmitter {
     this.componentWillMount && this.componentWillMount();
     this.update(true);
     let finishMount = () => {
+      // TODO: might need a timeout here
       this.componentDidMount && this.componentDidMount();
       this.emit('mount');
     }
@@ -129,18 +130,29 @@ export class BaseComponent extends EventEmitter {
     !force && this.componentWillUpdate && this.componentWillUpdate(this.props, this.state);
     this.refs = {};
     this.lastVirtualElement = this.virtualElement;
-    this.virtualElement = this.safeRender();
-    // this.virtualElement.properties.key = this.virtualElement.properties.key || this.props.key;
-    // this.virtualElement.key = this.virtualElement.key || this.props.key;
-    if (this.domNode) delete this.domNode.component;
-    this.domNode = this.resolveDOM(this);
-    let finishUpdate = () => {
-      !force && this.componentDidUpdate && this.componentDidUpdate();
-      this.emit('update');
-      this.isUpdating = false;
-      this.lastComponent = null;
+    let afterRender = () => {
+      // this.virtualElement.properties.key = this.virtualElement.properties.key || this.props.key;
+      // this.virtualElement.key = this.virtualElement.key || this.props.key;
+      if (this.domNode) delete this.domNode.component;
+      this.domNode = this.resolveDOM(this);
+      let finishUpdate = () => {
+        !force && this.componentDidUpdate && this.componentDidUpdate();
+        this.emit('update');
+        this.isUpdating = false;
+        this.lastComponent = null;
+      };
+      setZeroTimeout(finishUpdate);
     };
-    setZeroTimeout(finishUpdate);
+    if (this.renderAsync) {
+      this.renderAsync(this.constructor, (newVirtualElement) => {
+        this.virtualElement = newVirtualElement;
+        afterRender();
+      });
+    }
+    else {
+      this.virtualElement = this.safeRender();
+      afterRender();
+    }
   }
 }
 

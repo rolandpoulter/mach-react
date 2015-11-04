@@ -177,18 +177,11 @@
 	        break;
 	      // slower
 	      default:
-	        len = arguments.length;
-	        args = new Array(len - 1);
-	        for (i = 1; i < len; i++)
-	          args[i - 1] = arguments[i];
+	        args = Array.prototype.slice.call(arguments, 1);
 	        handler.apply(this, args);
 	    }
 	  } else if (isObject(handler)) {
-	    len = arguments.length;
-	    args = new Array(len - 1);
-	    for (i = 1; i < len; i++)
-	      args[i - 1] = arguments[i];
-
+	    args = Array.prototype.slice.call(arguments, 1);
 	    listeners = handler.slice();
 	    len = listeners.length;
 	    for (i = 0; i < len; i++)
@@ -226,7 +219,6 @@
 
 	  // Check for listener leak
 	  if (isObject(this._events[type]) && !this._events[type].warned) {
-	    var m;
 	    if (!isUndefined(this._maxListeners)) {
 	      m = this._maxListeners;
 	    } else {
@@ -348,7 +340,7 @@
 
 	  if (isFunction(listeners)) {
 	    this.removeListener(type, listeners);
-	  } else {
+	  } else if (listeners) {
 	    // LIFO order
 	    while (listeners.length)
 	      this.removeListener(type, listeners[listeners.length - 1]);
@@ -369,15 +361,20 @@
 	  return ret;
 	};
 
+	EventEmitter.prototype.listenerCount = function(type) {
+	  if (this._events) {
+	    var evlistener = this._events[type];
+
+	    if (isFunction(evlistener))
+	      return 1;
+	    else if (evlistener)
+	      return evlistener.length;
+	  }
+	  return 0;
+	};
+
 	EventEmitter.listenerCount = function(emitter, type) {
-	  var ret;
-	  if (!emitter._events || !emitter._events[type])
-	    ret = 0;
-	  else if (isFunction(emitter._events[type]))
-	    ret = 1;
-	  else
-	    ret = emitter._events[type].length;
-	  return ret;
+	  return emitter.listenerCount(type);
 	};
 
 	function isFunction(arg) {
@@ -2653,11 +2650,11 @@
 	  var _again = true;_function: while (_again) {
 	    var object = _x,
 	        property = _x2,
-	        receiver = _x3;desc = parent = getter = undefined;_again = false;if (object === null) object = Function.prototype;var desc = Object.getOwnPropertyDescriptor(object, property);if (desc === undefined) {
+	        receiver = _x3;_again = false;if (object === null) object = Function.prototype;var desc = Object.getOwnPropertyDescriptor(object, property);if (desc === undefined) {
 	      var parent = Object.getPrototypeOf(object);if (parent === null) {
 	        return undefined;
 	      } else {
-	        _x = parent;_x2 = property;_x3 = receiver;_again = true;continue _function;
+	        _x = parent;_x2 = property;_x3 = receiver;_again = true;desc = parent = undefined;continue _function;
 	      }
 	    } else if ('value' in desc) {
 	      return desc.value;
@@ -2811,6 +2808,7 @@
 	      this.componentWillMount && this.componentWillMount();
 	      this.update(true);
 	      var finishMount = function finishMount() {
+	        // TODO: might need a timeout here
 	        _this.componentDidMount && _this.componentDidMount();
 	        _this.emit('mount');
 	      };
@@ -3231,7 +3229,9 @@
 	    }
 	    if (prop === 'style') {
 	      var styles = props[prop];
-	      if (Array.isArray(styles)) styles = Object.assign.apply(Object, [{}].concat(_toConsumableArray(styles)));
+	      if (Array.isArray(styles)) {
+	        if (styles.__cssMergeCache__) styles = styles.__cssMergeCache__;else styles = styles.__cssMergeCache__ = Object.assign.apply(Object, [{}].concat(_toConsumableArray(styles)));
+	      }
 	      newProps[prop] = typeof styles === 'string' ? styles : fixProps.fixStyles(styles);
 	      return;
 	    }
